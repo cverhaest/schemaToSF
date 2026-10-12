@@ -1,42 +1,19 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Interprétation — PARCOURS_EP – FUITE CHEZ UN PARTICULIER</title>
-<style>
-  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 24px; color:#1a1a1a; }
-  h1 { font-size: 20px; }
-  .legend { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0 24px; }
-  .legend .item { display:flex; align-items:center; gap:8px; font-size:13px; }
-  .swatch { width:22px; height:14px; border:1px solid #333; border-radius:2px; display:inline-block; }
-  .note { background:#f6f6f6; border-left:4px solid #0176d3; padding:10px 14px; font-size:13px; margin-bottom:20px; }
-  .mermaid { background:#fff; }
-</style>
-<script type="module">
-  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
-  mermaid.initialize({ startOnLoad: true, flowchart: { useMaxWidth: false, htmlLabels: true } });
-</script>
-</head>
-<body>
-<h1>Interprétation du schéma → Screen Flow : <code>PARCOURS_EP – FUITE CHEZ UN PARTICULIER</code></h1>
-<div class="note">
-  Ceci est <b>mon interprétation du logigramme</b> (pas encore le Flow déployé). Les formes losange = écrans de question (branchements) ;
-  les rectangles colorés = actions / navigations / conseils, qui seront des <b>placeholders</b> dans le Flow (pas d'objet Salesforce, pas d'appel de sous-flow réel pour l'instant).
-  Chaque « Indiquer en commentaire » (localisation / ampleur / degré d'urgence) sera intégré au placeholder d'action correspondant.
-</div>
-<div class="legend">
-  <div class="item"><span class="swatch" style="background:#E2E8D5"></span> Question à poser au client (écran)</div>
-  <div class="item"><span class="swatch" style="background:#C9C2DE"></span> Navigation dans le script (placeholder sous-flow)</div>
-  <div class="item"><span class="swatch" style="background:#9DB7D4"></span> Conseil à donner au client</div>
-  <div class="item"><span class="swatch" style="background:#9EFF4D"></span> Action du Téléconseiller (placeholder)</div>
-  <div class="item"><span class="swatch" style="background:#FF4D4D"></span> Intervention urgente</div>
-  <div class="item"><span class="swatch" style="background:#FFA500"></span> Intervention délai court (&lt;48h)</div>
-  <div class="item"><span class="swatch" style="background:#FFF34D"></span> Intervention délai court (J+2–J+7)</div>
-  <div class="item"><span class="swatch" style="background:#DDDDDD;border-style:dashed"></span> Placeholder de fin (ajout hors schéma, à définir)</div>
-</div>
+# Interprétation du schéma → modèle data-driven : `PARCOURS_EP – FUITE CHEZ UN PARTICULIER`
 
-<pre class="mermaid">
+> Ceci est **mon interprétation du logigramme** d'origine. Les formes losange = écrans de question (branchements) ; les rectangles colorés = actions / navigations / conseils. Dans le modèle **data-driven**, chaque case/losange devient un `Noeud__c` et chaque flèche un `Transition__c` (voir [`../doc/EP_Fuite_Particulier_RECORDS.md`](../doc/EP_Fuite_Particulier_RECORDS.md)). Chaque « Indiquer en commentaire » (localisation / ampleur / degré d'urgence) est repris dans le `MappageChamps_JSON` de l'action correspondante.
+
+**Légende :**
+
+- 🟩 Question à poser au client (écran)
+- 🟪 Navigation dans le script (vers un autre parcours)
+- 🟦 Conseil à donner au client
+- 🟢 Action du Téléconseiller
+- 🔴 Intervention urgente
+- 🟠 Intervention délai court (<48h)
+- 🟡 Intervention délai court (J+2–J+7)
+- ⬜ Placeholder de fin (ajout hors schéma, à définir)
+
+```mermaid
 flowchart TD
   START(["Début du parcours"]) --> ID
 
@@ -108,7 +85,4 @@ flowchart TD
   classDef court48 fill:#FFA500,stroke:#333,color:#000;
   classDef courtJ fill:#FFF34D,stroke:#333,color:#000;
   classDef placeholder fill:#DDDDDD,stroke:#333,color:#000,stroke-dasharray:4 3;
-</pre>
-
-</body>
-</html>
+```

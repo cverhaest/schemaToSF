@@ -66,23 +66,23 @@ Posé sur la page **Compte / Requête**, le LWC :
 
 Le même composant sert les **100 parcours**. Une action = **un DML décrit par la donnée** (objet cible + mapping des champs en JSON) : plus de classe Apex par type d'action.
 
-## 4. Les spécifications (à ouvrir dans un navigateur)
+## 4. Les spécifications
 
-Les spécifications sont les pages HTML du dossier [`doc/`](doc/) ; l'**interprétation des schémas d'origine** (logigrammes Mermaid) vit dans [`interpretation/`](interpretation/). Toutes s'ouvrent dans n'importe quel navigateur (diagrammes **Mermaid** inclus).
+Les spécifications sont les pages Markdown du dossier [`doc/`](doc/) ; l'**interprétation des schémas d'origine** (logigrammes Mermaid) vit dans [`interpretation/`](interpretation/). GitHub les **rend directement** dans le navigateur du dépôt, **diagrammes Mermaid inclus** — aucun téléchargement nécessaire.
 
 **Spécifications — [`doc/`](doc/) :**
 
 | Fichier | Contenu |
 |---|---|
-| [`Architecture_DataDriven.html`](doc/Architecture_DataDriven.html) | **Document d'architecture** : modèle de données, lancement depuis Compte/Case, sélection du parcours, boucle du moteur, navigation inter-parcours, classe Apex générique. **Commencer par celui-ci.** |
-| [`Dictionnaire_Donnees_Parcours.html`](doc/Dictionnaire_Donnees_Parcours.html) | **Dictionnaire de données** : chaque objet/champ décrit, avec exemples. |
-| [`EP_Fuite_Particulier_RECORDS.html`](doc/EP_Fuite_Particulier_RECORDS.html) | **Exemple concret** : le parcours « EP – Fuite chez un particulier » entièrement traduit en enregistrements (preuve que le modèle tient). |
+| [`Architecture_DataDriven.md`](doc/Architecture_DataDriven.md) | **Document d'architecture** : modèle de données, lancement depuis Compte/Case, sélection du parcours, boucle du moteur, navigation inter-parcours, classe Apex générique. **Commencer par celui-ci.** |
+| [`Dictionnaire_Donnees_Parcours.md`](doc/Dictionnaire_Donnees_Parcours.md) | **Dictionnaire de données** : chaque objet/champ décrit, avec exemples. |
+| [`EP_Fuite_Particulier_RECORDS.md`](doc/EP_Fuite_Particulier_RECORDS.md) | **Exemple concret** : le parcours « EP – Fuite chez un particulier » entièrement traduit en enregistrements (preuve que le modèle tient). |
 
 **Interprétation des schémas — [`interpretation/`](interpretation/) :**
 
 | Fichier | Contenu |
 |---|---|
-| [`EP_Fuite_Particulier_interpretation.html`](interpretation/EP_Fuite_Particulier_interpretation.html) | Logigramme Mermaid du parcours (interprétation du schéma d'origine). |
+| [`EP_Fuite_Particulier_interpretation.md`](interpretation/EP_Fuite_Particulier_interpretation.md) | Logigramme Mermaid du parcours (interprétation du schéma d'origine). |
 
 Les logigrammes d'origine (schémas sources) sont dans le dossier [`schema/`](schema/).
 
