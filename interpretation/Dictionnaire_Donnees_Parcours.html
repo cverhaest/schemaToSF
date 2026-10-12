@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Dictionnaire de données — Parcours (data-driven)</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 24px; color:#1a1a1a; line-height:1.45; }
+  h1 { font-size: 21px; }
+  h2 { font-size: 17px; margin-top:40px; border-bottom:2px solid #0176d3; padding-bottom:6px; }
+  h3 { font-size: 14.5px; margin-top:22px; color:#0176d3; }
+  .note { background:#f6f6f6; border-left:4px solid #0176d3; padding:10px 14px; font-size:13px; margin:14px 0 18px; }
+  .ok   { background:#eefaf0; border-left:4px solid #2E7D32; padding:10px 14px; font-size:13px; margin:14px 0 18px; }
+  .key  { background:#fff8e6; border-left:4px solid #FFA500; padding:10px 14px; font-size:13px; margin:14px 0 18px; }
+  table { border-collapse:collapse; font-size:12.5px; margin:10px 0; width:100%; }
+  th, td { border:1px solid #ccc; padding:5px 8px; text-align:left; vertical-align:top; }
+  th { background:#eef4fb; }
+  code { background:#eee; padding:1px 4px; border-radius:3px; font-size:11.5px; }
+  .f { font-family: ui-monospace, Menlo, monospace; white-space:nowrap; font-weight:600; }
+  .ex { background:#F2F8FF; }
+  .q{background:#E2E8D5;} .nav{background:#C9C2DE;} .cons{background:#9DB7D4;}
+  .rv{background:#9EFF4D;} .c48{background:#FFA500;} .fin{background:#DDDDDD;}
+</style>
+</head>
+<body>
+
+<h1>Dictionnaire de données — modèle « Parcours » data-driven</h1>
+<div class="note">
+  Description champ par champ, avec un <b>exemple concret tiré de l'arbre EP – FUITE</b>. Objectif : comprendre à quoi sert chaque colonne (notamment <code>Type</code>, <code>CodePresta</code>, <code>ObjetCible</code> / <code>MappageChamps_JSON</code> de <code>Noeud__c</code>). Document de conception — rien n'est déployé.
+</div>
+
+<div class="key">
+  <b>La règle de traduction de l'arbre, en une phrase :</b><br/>
+  • chaque <b>case / losange</b> du logigramme → 1 <code>Noeud__c</code> &nbsp;•&nbsp; chaque <b>flèche (réponse)</b> → 1 <code>Transition__c</code> &nbsp;•&nbsp; chaque <b>champ d'un écran de saisie</b> → 1 <code>ChampSaisie__c</code>.
+</div>
+
+<!-- ===================== DÉFINITION ===================== -->
+<h2>A. Objets de DÉFINITION (le parcours tel qu'il est écrit)</h2>
+
+<h3>Parcours__c — l'en-tête du logigramme</h3>
+<table>
+  <tr><th>Champ</th><th>Type SF</th><th>Description</th><th>Exemple (EP – FUITE)</th></tr>
+  <tr><td class="f">Code</td><td>Text (unique)</td><td>Identifiant technique stable, utilisé pour l'import et le mapping.</td><td class="ex">EP_FUITE_PART</td></tr>
+  <tr><td class="f">Libelle</td><td>Text</td><td>Nom lisible affiché aux utilisateurs.</td><td class="ex">PARCOURS_EP – FUITE CHEZ UN PARTICULIER</td></tr>
+  <tr><td class="f">Version</td><td>Number</td><td>Versionnage : faire évoluer un parcours sans casser l'historique des exécutions.</td><td class="ex">1</td></tr>
+  <tr><td class="f">Statut</td><td>Picklist</td><td>Brouillon / Actif / Archivé. Seuls les « Actif » sont proposés aux agents.</td><td class="ex">Actif</td></tr>
+  <tr><td class="f">Categorie</td><td>Picklist</td><td>Regroupe les parcours pour la sélection / le filtrage.</td><td class="ex">Eau potable</td></tr>
+  <tr><td class="f">NoeudDepart_FK</td><td>Lookup → Noeud__c</td><td>Le premier nœud exécuté au lancement.</td><td class="ex">N_ID (écran d'identification)</td></tr>
+</table>
+
+<h3>Noeud__c — une étape du parcours (le cœur du modèle)</h3>
+<table>
+  <tr><th>Champ</th><th>Type SF</th><th>Description</th><th>Exemple (EP – FUITE)</th></tr>
+  <tr><td class="f">Parcours_FK</td><td>Lookup → Parcours__c</td><td>À quel parcours appartient l'étape.</td><td class="ex">EP_FUITE_PART</td></tr>
+  <tr><td class="f">Type</td><td>Picklist</td><td><b>Le champ structurant</b> : la <u>nature</u> de l'étape. Détermine comment le moteur la traite (voir encadré ci-dessous).</td><td class="ex">Question</td></tr>
+  <tr><td class="f">Texte</td><td>Long text</td><td>Le contenu affiché : la question, le conseil, ou le libellé de l'action.</td><td class="ex">« Quelle est l'ampleur de la fuite ? »</td></tr>
+  <tr><td class="f">TypeAction</td><td>Picklist <i>(si Type = Action)</i></td><td><b>Le verbe DML</b> : dit à la classe générique quoi faire sur <code>ObjetCible</code> — <b>Créer</b> (<code>insert</code>), <b>Mettre à jour</b> (<code>update</code>, requiert l'<code>Id</code> cible dans le JSON), <b>Supprimer</b> (<code>delete</code>, requiert l'<code>Id</code>), éventuellement <b>Upsert</b>. Ne sert <b>plus</b> à aiguiller vers une classe par type : une seule classe générique suffit.</td><td class="ex">Créer &nbsp;/&nbsp; Mettre à jour &nbsp;/&nbsp; Supprimer</td></tr>
+  <tr><td class="f">CodePresta</td><td>Text <i>(optionnel / reporting)</i></td><td><b>Le code de prestation Suez</b> (type de bon d'intervention). Conservé comme <b>libellé reportable</b> et référencé par le JSON via <code>{noeud.CodePresta}</code> (zéro duplication). Supprimable si Suez ne reporte pas dessus → mettre la valeur en dur dans le JSON.</td><td class="ex">CET05 (compteur/robinet/joint)<br/>BEC03 (canalisation)</td></tr>
+  <tr><td class="f">ObjetCible</td><td>Text <i>(si Type = Action)</i></td><td><b>QUEL objet Salesforce créer</b> (nom d'API). Le nœud crée <b>un seul</b> record ; plusieurs records = <b>plusieurs nœuds Action enchaînés</b>.</td><td class="ex">Event &nbsp;/&nbsp; WorkOrder</td></tr>
+  <tr><td class="f">MappageChamps_JSON</td><td>Long text <i>(si Type = Action)</i></td><td><b>QUELS champs renseigner</b> : couples <i>champ → valeur</i>. Valeurs fixes, <b>jetons</b> (<code>{client}</code>, <code>{case}</code>, <code>TODAY+3</code>, <code>{noeud.CodePresta}</code>) ou réponses fusionnées (<code>{ampleur}</code>), résolus à l'exécution par le handler générique. Englobe l'ancien <code>Delai</code> (via <code>TODAY+N</code>), <code>Parametres_JSON</code> et <code>TemplateCommentaire</code> (via <code>Subject</code>).</td><td class="ex">{ "ActivityDate":"TODAY+3",<br/>"WhoId":"{client}" }</td></tr>
+  <tr><td class="f">ParcoursCible_FK</td><td>Lookup → Parcours__c <i>(si Type = Navigation)</i></td><td><b>Vers quel autre parcours débrancher</b>. Le moteur passe la main au <code>NoeudDepart_FK</code> de ce parcours (voir encadré « Navigation inter-parcours »).</td><td class="ex">EP – FUITE DOMAINE PUBLIC</td></tr>
+</table>
+<div class="key">
+  <b>Les 5 valeurs de <code>Type</code> — ce que fait le moteur :</b>
+  <table style="margin-top:8px;">
+    <tr><th>Type</th><th>Comportement</th><th>Exemple EP</th></tr>
+    <tr><td class="q f">Question</td><td>Affiche un écran ; les <b>réponses = ses Transitions</b> (+ éventuels ChampSaisie).</td><td>N_AMPB « Ampleur ? »</td></tr>
+    <tr><td class="nav f">Navigation</td><td>Passe la main à un autre parcours via <code>ParcoursCible_FK</code> (voir encadré).</td><td>N_NAVDP → « Domaine public »</td></tr>
+    <tr><td class="cons f">Conseil</td><td>Écran d'information à lire au client, puis on continue.</td><td>N_CONS « Domaine privatif… »</td></tr>
+    <tr><td class="rv f">Action</td><td>Opère un <b>DML sur un record</b> (<code>insert</code> / <code>update</code> / <code>delete</code> selon <code>TypeAction</code>) via la <b>classe générique unique</b>.</td><td>N_BEC48, N_RVBEC48</td></tr>
+    <tr><td class="fin f">Fin</td><td>Termine le parcours (clôt la Session).</td><td>N_FIN</td></tr>
+  </table>
+</div>
+
+<h3>Transition__c — une réponse possible (une flèche du logigramme)</h3>
+<table>
+  <tr><th>Champ</th><th>Type SF</th><th>Description</th><th>Exemple (EP – FUITE)</th></tr>
+  <tr><td class="f">NoeudSource_FK</td><td>Lookup → Noeud__c</td><td>Le nœud d'où part la réponse.</td><td class="ex">N_AMPB</td></tr>
+  <tr><td class="f">Libelle_reponse</td><td>Text</td><td>Le texte du choix proposé à l'agent (l'option du bouton radio).</td><td class="ex">« Filet d'eau / seau en qq heures »</td></tr>
+  <tr><td class="f">NoeudCible_FK</td><td>Lookup → Noeud__c</td><td>Le nœud vers lequel on va si ce choix est retenu.</td><td class="ex">N_BO</td></tr>
+  <tr><td class="f">Ordre</td><td>Number</td><td>Ordre d'affichage des choix sur l'écran.</td><td class="ex">2</td></tr>
+</table>
+<div class="ok">
+  <b>C'est ainsi que sont « générées » les réponses :</b> une question = ses Transitions sortantes. « Oui/Non » = 2 Transitions ; « Propriété / Rue » = 2 Transitions.
+  Et <b>plusieurs Transitions peuvent viser le même <code>NoeudCible</code></b> → c'est la factorisation (fan-in) : ex. N_EACCD(Oui), N_CO(Oui) et N_RVCET48 pointent tous vers N_CET48.
+</div>
+
+<h3>ChampSaisie__c — un champ d'un écran de saisie</h3>
+<table>
+  <tr><th>Champ</th><th>Type SF</th><th>Description</th><th>Exemple (EP – FUITE)</th></tr>
+  <tr><td class="f">Noeud_FK</td><td>Lookup → Noeud__c</td><td>L'écran (Noeud de type Question) qui porte ce champ.</td><td class="ex">N_ID</td></tr>
+  <tr><td class="f">Libelle</td><td>Text</td><td>Intitulé du champ saisi.</td><td class="ex">Téléphone</td></tr>
+  <tr><td class="f">TypeChamp</td><td>Picklist</td><td>Text / Phone / Email / Number / Date… → pilote le composant d'input.</td><td class="ex">Phone</td></tr>
+  <tr><td class="f">MappageCible</td><td>Text (option.)</td><td><b>Chemin</b> de recopie vers une fiche (optionnel). <b>Dernier segment = champ à écrire</b> ; <b>préfixe = record à atteindre</b> (racine = jeton de session <code>{client}</code>/<code>{case}</code>, ou type d'origine <code>Case.Account.…</code>). Vide → la valeur n'est que tracée dans <code>ReponseSaisie__c</code>.</td><td class="ex">{client}.Phone</td></tr>
+  <tr><td class="f">Ordre</td><td>Number</td><td>Ordre d'affichage dans l'écran.</td><td class="ex">4</td></tr>
+</table>
+<div class="ok">
+  <b><code>MappageCible</code> — comment une saisie met à jour une fiche :</b>
+  <table style="margin-top:8px;">
+    <tr><th><code>MappageCible</code></th><th>Record mis à jour</th><th>Champ</th></tr>
+    <tr><td class="f">{client}.Phone</td><td>Person Account de la session</td><td>Phone</td></tr>
+    <tr><td class="f">{client}.PersonEmail</td><td>Person Account de la session</td><td>PersonEmail</td></tr>
+    <tr><td class="f">{case}.Subject</td><td>Case de la session</td><td>Subject</td></tr>
+    <tr><td class="f">Case.Account.LastName</td><td>Account du Case (via <code>Case.AccountId</code>)</td><td>LastName</td></tr>
+  </table>
+  <b>3 règles :</b> (1) le jeton <code>{client}</code> est résolu que le parcours parte d'un <b>Case</b> ou d'un <b>Account</b> → <b>une seule valeur</b> valable partout (préférez-le au chemin absolu <code>Case.Account.…</code>, lié à un seul point de lancement) ; (2) le moteur <b>regroupe</b> les champs visant le même record → <b>un seul <code>update</code></b> par record ; (3) <b>Person Account</b> : viser <code>{client}.PersonEmail</code> / <code>{client}.PersonMobilePhone</code>, pas <code>Contact.*</code>. <b>État :</b> mapping déclaré dans la donnée, recopie activée quand le moteur joue l'étape (phase ultérieure) ; la trace <code>ReponseSaisie__c</code> est systématique.
+</div>
+
+<div class="ok">
+  <b>Modèle B — créer plusieurs records = enchaîner plusieurs nœuds :</b> si un nœud doit créer <b>2 Events</b> (J+3 et J+9), on crée <b>2 nœuds Action</b> reliés par une transition (ex. <code>N_RVCETJ_1</code> → <code>N_RVCETJ_2</code>), chacun avec son <code>ObjetCible</code> = Event et son JSON (dont <code>ActivityDate:"TODAY+3"</code> / <code>"TODAY+9"</code>). Pas d'objet enfant <code>ModeleAction__c</code> : le moteur boucle déjà sur les nœuds. L'ancien <code>{ nbEvents: 2 }</code> cachait tout dans le code — ici tout est <b>dans la donnée, lisible et éditable</b>, un nœud = un record.
+</div>
+
+<div class="ok">
+  <b>Navigation inter-parcours — « Aller à un autre parcours » :</b> un nœud de type <b>Navigation</b> porte <code>ParcoursCible_FK</code>. En l'atteignant, le moteur <b>passe la main</b> au <code>NoeudDepart_FK</code> du parcours visé (ex. domaine public « Dans votre propriété » → parcours « Fuite domaine privé » ; « Eau sale » → « Assainissement »).
+  <ul style="margin:6px 0 0 18px; padding:0;">
+    <li><b>Traçabilité :</b> on ouvre une <b>sous-session</b> (<code>SessionParcours__c</code> enfant, <code>SessionParente_FK</code> = session courante, même <code>OrigineType</code>/<code>OrigineId</code>) → chaque parcours garde son journal, le lien parent↔enfant reconstitue le trajet complet.</li>
+    <li><b>Transfert, pas sous-routine :</b> « Aller à X » ne revient pas → le parent se clôt. (<code>SessionParente_FK</code> permettrait un retour si besoin un jour.)</li>
+    <li><b>Coût :</b> 1 lookup sur <code>Noeud__c</code> + 1 lookup d'audit sur <code>SessionParcours__c</code>, <b>aucun nouvel objet</b>.</li>
+  </ul>
+</div>
+
+<h3>TypeAction__mdt — registre de handlers spéciaux (optionnel, non utilisé par défaut)</h3>
+<div class="note">
+  <b>Non requis pour les parcours actuels.</b> Toute action = un DML (Créer / Mettre à jour / Supprimer) sur <code>ObjetCible</code> → <b>une seule classe générique</b> suffit (lit <code>TypeAction</code> + <code>ObjetCible</code> + <code>MappageChamps_JSON</code>, résout les jetons, exécute le DML). Ce registre ne devient utile que si, un jour, une action n'est <b>pas</b> un simple DML — une <b>logique spéciale</b> (callout vers un système externe, calcul de date ouvrée…) : on branche alors une classe dédiée via une <b>clé de routage propre</b> (champ dédié sur le nœud), <b>sans toucher</b> à <code>TypeAction</code> qui reste le verbe DML.
+</div>
+<table>
+  <tr><th>Champ</th><th>Type SF</th><th>Description</th><th>Exemple</th></tr>
+  <tr><td class="f">Label</td><td>Text</td><td>Clé de l'action spéciale (référencée par un champ de routage dédié du nœud).</td><td class="ex">CalloutPlanif</td></tr>
+  <tr><td class="f">ClasseApex</td><td>Text</td><td>Classe Apex dédiée (logique <b>non</b>-DML : callout, calcul).</td><td class="ex">PlanifExterneHandler</td></tr>
+  <tr><td class="f">Actif</td><td>Checkbox</td><td>Activer/désactiver un type sans le supprimer.</td><td class="ex">✓</td></tr>
+</table>
+
+<!-- ===================== EXÉCUTION ===================== -->
+<h2>B. Objets d'EXÉCUTION (ce qui se passe quand on déroule le parcours)</h2>
+
+<h3>SessionParcours__c — une exécution</h3>
+<table>
+  <tr><th>Champ</th><th>Type SF</th><th>Description</th><th>Exemple</th></tr>
+  <tr><td class="f">Parcours_FK</td><td>Lookup → Parcours__c</td><td>Quel parcours est déroulé.</td><td class="ex">EP_FUITE_PART</td></tr>
+  <tr><td class="f">OrigineType</td><td>Text</td><td><b>Type</b> de l'objet depuis lequel on a lancé (générique).</td><td class="ex">Case</td></tr>
+  <tr><td class="f">OrigineId</td><td>Text (18)</td><td><b>Id</b> du record d'origine.</td><td class="ex">500Ab000001XyZ…</td></tr>
+  <tr><td class="f">Account_FK_option / Case_FK_option</td><td>Lookup (option.)</td><td>Lookups de confort pour le reporting natif (dérivés).</td><td class="ex">—</td></tr>
+  <tr><td class="f">NoeudCourant_FK</td><td>Lookup → Noeud__c</td><td>Où en est l'agent (permet la reprise).</td><td class="ex">N_BO</td></tr>
+  <tr><td class="f">SessionParente_FK</td><td>Lookup → Session <i>(option.)</i></td><td>Si cette session a été ouverte par un nœud <b>Navigation</b> d'un autre parcours → trace le parcours appelant (audit du trajet complet).</td><td class="ex">(la session « domaine public »)</td></tr>
+  <tr><td class="f">Statut</td><td>Picklist</td><td>En cours / Terminé / Abandonné.</td><td class="ex">En cours</td></tr>
+  <tr><td class="f">DateDebut / DateFin</td><td>DateTime</td><td>Horodatage de l'exécution.</td><td class="ex">09/10/2026 14:32</td></tr>
+  <tr><td class="f">Agent_FK</td><td>Lookup → User</td><td>Qui déroule le parcours.</td><td class="ex">j.martin</td></tr>
+</table>
+
+<h3>ReponseSaisie__c — chaque réponse donnée</h3>
+<table>
+  <tr><th>Champ</th><th>Type SF</th><th>Description</th><th>Exemple</th></tr>
+  <tr><td class="f">Session_FK</td><td>Master-Detail → Session</td><td>À quelle exécution appartient la réponse.</td><td class="ex">(la session en cours)</td></tr>
+  <tr><td class="f">Noeud_FK</td><td>Lookup → Noeud__c</td><td>Quelle question était posée.</td><td class="ex">N_AMPB</td></tr>
+  <tr><td class="f">Transition_FK</td><td>Lookup → Transition__c</td><td>Quelle réponse a été choisie (question à choix).</td><td class="ex">« Filet d'eau… »</td></tr>
+  <tr><td class="f">Valeur_libre</td><td>Text</td><td>La valeur saisie (pour un ChampSaisie / saisie libre).</td><td class="ex">06 12 34 56 78</td></tr>
+  <tr><td class="f">Horodatage</td><td>DateTime</td><td>Quand la réponse a été donnée.</td><td class="ex">14:33</td></tr>
+</table>
+
+<h3>ActionExecutee__c — journal des actions DML (créations / mises à jour / suppressions)</h3>
+<table>
+  <tr><th>Champ</th><th>Type SF</th><th>Description</th><th>Exemple</th></tr>
+  <tr><td class="f">Session_FK</td><td>Master-Detail → Session</td><td>À quelle exécution.</td><td class="ex">(la session en cours)</td></tr>
+  <tr><td class="f">Noeud_FK</td><td>Lookup → Noeud__c</td><td>Le nœud d'action exécuté.</td><td class="ex">N_BEC48</td></tr>
+  <tr><td class="f">TypeAction</td><td>Text</td><td>Le <b>verbe DML</b> joué (Créer / Mettre à jour / Supprimer).</td><td class="ex">Créer</td></tr>
+  <tr><td class="f">RecordCreeId</td><td>Text</td><td>Id du record visé (créé / mis à jour / supprimé). → sert à l'<b>idempotence</b>.</td><td class="ex">0WOAb000000…</td></tr>
+  <tr><td class="f">Statut</td><td>Picklist</td><td>OK / Erreur.</td><td class="ex">OK</td></tr>
+  <tr><td class="f">Message</td><td>Long text</td><td>Détail ou message d'erreur éventuel.</td><td class="ex">WorkOrder BEC03 créé</td></tr>
+</table>
+
+<!-- ===================== FIL ROUGE ===================== -->
+<h2>C. Fil rouge : un appel réel traduit dans le modèle</h2>
+<div class="note">
+  <b>Scénario :</b> Mme Dupont appelle. Fuite <b>dans sa propriété</b>, <b>eau propre</b>, à l'<b>intérieur</b>, <b>entre compteur et rue</b>, sur la <b>canalisation</b>, <b>filet d'eau</b>, <b>lieu non accessible</b>.
+</div>
+
+<h3>Le chemin parcouru (lecture des records de définition)</h3>
+<pre style="font-family:ui-monospace,Menlo,monospace; font-size:12px; background:#fafafa; border:1px solid #ddd; padding:12px; overflow-x:auto;">
+N_ID → N_LOC → N_EAU → N_IE → N_INT → N_OU → N_AMPB → N_BO → N_RVBEC48 → N_BEC48 → N_FIN
+</pre>
+<table>
+  <tr><th>#</th><th>Noeud (lu)</th><th>Type</th><th>Réponse de l'agent (Transition suivie)</th></tr>
+  <tr><td>1</td><td class="f">N_ID</td><td class="q">Question (saisie)</td><td>Saisit nom, réf, adresse, tél, mail → <i>Continuer</i></td></tr>
+  <tr><td>2</td><td class="f">N_LOC</td><td class="q">Question</td><td>« Dans votre propriété » → N_EAU</td></tr>
+  <tr><td>3</td><td class="f">N_EAU</td><td class="q">Question</td><td>« Eau propre » → N_IE</td></tr>
+  <tr><td>4</td><td class="f">N_IE</td><td class="q">Question</td><td>« Intérieur » → N_INT</td></tr>
+  <tr><td>5</td><td class="f">N_INT</td><td class="q">Question</td><td>« Entre compteur et rue » → N_OU</td></tr>
+  <tr><td>6</td><td class="f">N_OU</td><td class="q">Question</td><td>« Canalisation (depuis la rue) » → N_AMPB</td></tr>
+  <tr><td>7</td><td class="f">N_AMPB</td><td class="q">Question</td><td>« Filet d'eau / seau en qq heures » → N_BO</td></tr>
+  <tr><td>8</td><td class="f">N_BO</td><td class="q">Question</td><td>« Non » (lieu pas accessible) → N_RVBEC48</td></tr>
+  <tr><td>9</td><td class="f">N_RVBEC48</td><td class="rv">Action · PriseRV</td><td>— (enchaîne) → N_BEC48</td></tr>
+  <tr><td>10</td><td class="f">N_BEC48</td><td class="c48">Action · Intervention</td><td>— (enchaîne) → N_FIN</td></tr>
+  <tr><td>11</td><td class="f">N_FIN</td><td class="fin">Fin</td><td>Clôture</td></tr>
+</table>
+
+<h3>Les records CRÉÉS pendant cette exécution</h3>
+<table>
+  <tr><th>Quand</th><th>Objet créé</th><th>Contenu</th></tr>
+  <tr><td>Au lancement (depuis le Case)</td><td class="f">SessionParcours__c ×1</td><td>Parcours = EP_FUITE_PART · OrigineType = Case · OrigineId = 500… · Statut = En cours</td></tr>
+  <tr><td>Étapes 1 à 8</td><td class="f">ReponseSaisie__c ×8</td><td>une par réponse (dont les 6 champs de l'écran d'identification en <code>Valeur_libre</code>). Les 3 champs à <code>MappageCible</code> non vide (<code>{client}.Phone</code> / <code>PersonMobilePhone</code> / <code>PersonEmail</code>) mettent aussi à jour le Person Account — en <b>un seul <code>update</code></b> — quand le moteur joue l'étape (phase ultérieure)</td></tr>
+  <tr><td>Étape 9 — N_RVBEC48<br/>(handler générique)</td><td class="f">Event + ActionExecutee__c</td><td>le nœud porte <code>ObjetCible = Event</code> + son JSON ; le handler résout les jetons et crée l'Event de RV lié au client · journal OK <i>(un RV à 2 dates = 2 nœuds Action enchaînés)</i></td></tr>
+  <tr><td>Étape 10 — N_BEC48<br/>(handler générique)</td><td class="f">WorkOrder + ActionExecutee__c</td><td>le nœud porte <code>ObjetCible = WorkOrder</code> + son JSON : <b>WorkOrder BEC03</b>, Priority = &lt;48h, Compte/Case = origine, Subject = « canalisation / filet d'eau / &lt;48h » (fusion) · journal OK</td></tr>
+  <tr><td>Étape 11 — N_FIN</td><td class="f">SessionParcours__c (maj)</td><td>Statut = Terminé · DateFin renseignée</td></tr>
+</table>
+<div class="ok">
+  <b>À retenir :</b> le même moteur a lu une poignée de records de <b>définition</b> et produit les records <b>métier</b> attendus (1 WorkOrder BEC03 &lt;48h + le RV). Pour un autre parcours, <b>seuls les records changent</b> — le moteur et les handlers restent identiques.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Interprétation — PARCOURS_EP – FUITE CHEZ UN PARTICULIER</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 24px; color:#1a1a1a; }
+  h1 { font-size: 20px; }
+  .legend { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0 24px; }
+  .legend .item { display:flex; align-items:center; gap:8px; font-size:13px; }
+  .swatch { width:22px; height:14px; border:1px solid #333; border-radius:2px; display:inline-block; }
+  .note { background:#f6f6f6; border-left:4px solid #0176d3; padding:10px 14px; font-size:13px; margin-bottom:20px; }
+  .mermaid { background:#fff; }
+</style>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, flowchart: { useMaxWidth: false, htmlLabels: true } });
+</script>
+</head>
+<body>
+<h1>Interprétation du schéma → Screen Flow : <code>PARCOURS_EP – FUITE CHEZ UN PARTICULIER</code></h1>
+<div class="note">
+  Ceci est <b>mon interprétation du logigramme</b> (pas encore le Flow déployé). Les formes losange = écrans de question (branchements) ;
+  les rectangles colorés = actions / navigations / conseils, qui seront des <b>placeholders</b> dans le Flow (pas d'objet Salesforce, pas d'appel de sous-flow réel pour l'instant).
+  Chaque « Indiquer en commentaire » (localisation / ampleur / degré d'urgence) sera intégré au placeholder d'action correspondant.
+</div>
+<div class="legend">
+  <div class="item"><span class="swatch" style="background:#E2E8D5"></span> Question à poser au client (écran)</div>
+  <div class="item"><span class="swatch" style="background:#C9C2DE"></span> Navigation dans le script (placeholder sous-flow)</div>
+  <div class="item"><span class="swatch" style="background:#9DB7D4"></span> Conseil à donner au client</div>
+  <div class="item"><span class="swatch" style="background:#9EFF4D"></span> Action du Téléconseiller (placeholder)</div>
+  <div class="item"><span class="swatch" style="background:#FF4D4D"></span> Intervention urgente</div>
+  <div class="item"><span class="swatch" style="background:#FFA500"></span> Intervention délai court (&lt;48h)</div>
+  <div class="item"><span class="swatch" style="background:#FFF34D"></span> Intervention délai court (J+2–J+7)</div>
+  <div class="item"><span class="swatch" style="background:#DDDDDD;border-style:dashed"></span> Placeholder de fin (ajout hors schéma, à définir)</div>
+</div>
+
+<pre class="mermaid">
+flowchart TD
+  START(["Début du parcours"]) --> ID
+
+  ID["Écran : Identification<br/>• Vous me rappelez votre nom svp ?<br/>• Référence client + Adresse concernée (contrôle contrat)<br/>• Téléphone / portable / mail"]:::question
+  ID --> QLOC{"Où se trouve la fuite ?"}:::question
+
+  QLOC -->|"Dans la rue / voie publique"| NAVDP["➡️ NAVIGATION (placeholder)<br/>Aller à « Fuite dans le domaine public »"]:::navigation
+  QLOC -->|"Dans votre propriété"| QEAU{"Eau propre ou eau sale ?"}:::question
+
+  QEAU -->|"Eau sale (couleur / odeur forte)"| NAVAS["➡️ NAVIGATION (placeholder)<br/>Aller à « Assainissement »"]:::navigation
+  QEAU -->|"Eau propre"| QIE{"À l'intérieur ou à l'extérieur ?<br/>(+ Appartement ou maison ? — informatif)"}:::question
+
+  QIE -->|"Extérieur"| EXT
+  QIE -->|"Intérieur"| INT
+
+  %% ================= EXTÉRIEUR =================
+  EXT{"Le compteur est-il situé dans une fosse (regard) ?<br/>La fosse est-elle pleine ?"}:::question
+  EXT -->|"Oui, fosse/regard déborde"| EACCD{"Lieu accessible à toute heure<br/>(sans votre présence) ?"}:::question
+  EXT -->|"Oui, fosse/regard ne déborde pas"| EACCN{"Lieu accessible à toute heure<br/>(sans votre présence) ?"}:::question
+  EXT -->|"Non, pas dans une fosse (hors schéma)"| EFIN["⏹️ Placeholder — fin de parcours<br/>(routage à définir ultérieurement)"]:::placeholder
+
+  EACCD -->|"oui"| ECETO1["🟠 Intervention &lt;48h<br/>//AT/Compteur changer pièces réparer fuite: CET05//<br/>+ commentaire (localisation / ampleur / urgence)"]:::court48
+  EACCD -->|"non"| ERVO["Action : Prise de RV (&lt;48h)"]:::action
+  ERVO --> ECETO2["🟠 //AT/Compteur CET05//<br/>+ commentaire"]:::court48
+
+  EACCN -->|"oui"| ECETY1["🟡 Intervention J+2–J+7<br/>//AT/Compteur CET05//<br/>+ commentaire"]:::courtJ
+  EACCN -->|"non"| ERVY["Action : Prise de RV J+3–J+9"]:::action
+  ERVY --> ECETY2["🟡 //AT/Compteur CET05//<br/>+ commentaire"]:::courtJ
+
+  %% ================= INTÉRIEUR =================
+  INT{"La fuite se situe-t-elle entre votre compteur et la rue,<br/>ou entre votre compteur et votre habitation ?"}:::question
+  INT -->|"Entre compteur et habitation"| CONS["🟦 CONSEIL (écran placeholder)<br/>« Fuite sur le domaine privatif. Responsabilité SUEZ engagée<br/>entre la rue et votre compteur. Rapprochez-vous d'un<br/>professionnel. Fermer le robinet avant compteur. »"]:::conseil
+  INT -->|"Entre compteur et rue"| QOU{"Où est située précisément cette fuite ?"}:::question
+
+  QOU -->|"Au niveau du compteur / du robinet / du joint"| AMPC{"Quelle est l'ampleur de la fuite ?<br/>(temps pour remplir un seau)<br/>— intervention CET05"}:::question
+  QOU -->|"Au niveau de la canalisation (depuis la rue / l'extérieur)"| AMPB{"Quelle est l'ampleur de la fuite ?<br/>(temps pour remplir un seau)<br/>— intervention BEC03"}:::question
+
+  %% ---- CET05 (compteur/robinet/joint) ----
+  AMPC -->|"Goutte à goutte / seau en 1 journée"| CY{"Lieu accessible ?"}:::question
+  CY -->|"oui"| CY1["🟡 CET05 J+2–J+7 + commentaire"]:::courtJ
+  CY -->|"non"| CYRV["Action : Prise de RV J+3–J+9"]:::action --> CY2["🟡 CET05 + commentaire"]:::courtJ
+
+  AMPC -->|"Filet d'eau / seau en plusieurs heures"| CO{"Lieu accessible ?"}:::question
+  CO -->|"oui"| CO1["🟠 CET05 &lt;48h + commentaire"]:::court48
+  CO -->|"non"| CORV["Action : Prise de RV (&lt;48h)"]:::action --> CO2["🟠 CET05 + commentaire"]:::court48
+
+  AMPC -->|"Seau en quelques minutes / inondation"| CR{"Lieu accessible ?"}:::question
+  CR -->|"oui"| CR1["🔴 CET05 URGENT + commentaire"]:::urgent
+  CR -->|"non"| CRRV["Action : Prise de RV immédiate / besoin client impératif"]:::action --> CR2["🔴 CET05 + commentaire"]:::urgent
+
+  %% ---- BEC03 (canalisation depuis la rue) ----
+  AMPB -->|"Goutte à goutte / seau en 1 journée"| BY{"Lieu accessible ?"}:::question
+  BY -->|"oui"| BY1["🟡 BEC03 J+2–J+7 + commentaire"]:::courtJ
+  BY -->|"non"| BYRV["Action : Prise de RV J+3–J+9"]:::action --> BY2["🟡 BEC03 + commentaire"]:::courtJ
+
+  AMPB -->|"Filet d'eau / seau en plusieurs heures"| BO{"Lieu accessible ?"}:::question
+  BO -->|"oui"| BO1["🟠 BEC03 &lt;48h + commentaire"]:::court48
+  BO -->|"non"| BORV["Action : Prise de RV (&lt;48h)"]:::action --> BO2["🟠 BEC03 + commentaire"]:::court48
+
+  AMPB -->|"Seau en quelques minutes / inondation"| BR{"Lieu accessible ?"}:::question
+  BR -->|"oui"| BR1["🔴 BEC03 URGENT + commentaire"]:::urgent
+  BR -->|"non"| BRRV["Action : Prise de RV immédiate / besoin client impératif"]:::action --> BR2["🔴 BEC03 + commentaire"]:::urgent
+
+  classDef question fill:#E2E8D5,stroke:#333,color:#000;
+  classDef navigation fill:#C9C2DE,stroke:#333,color:#000;
+  classDef conseil fill:#9DB7D4,stroke:#333,color:#000;
+  classDef action fill:#9EFF4D,stroke:#333,color:#000;
+  classDef urgent fill:#FF4D4D,stroke:#333,color:#000;
+  classDef court48 fill:#FFA500,stroke:#333,color:#000;
+  classDef courtJ fill:#FFF34D,stroke:#333,color:#000;
+  classDef placeholder fill:#DDDDDD,stroke:#333,color:#000,stroke-dasharray:4 3;
+</pre>
+
+</body>
+</html>

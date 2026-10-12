@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>EP – FUITE CHEZ UN PARTICULIER — saisie en records (data-driven)</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 24px; color:#1a1a1a; line-height:1.4; }
+  h1 { font-size: 21px; }
+  h2 { font-size: 17px; margin-top:36px; border-bottom:2px solid #0176d3; padding-bottom:6px; }
+  .note { background:#f6f6f6; border-left:4px solid #0176d3; padding:10px 14px; font-size:13px; margin:14px 0 18px; }
+  .ok   { background:#eefaf0; border-left:4px solid #2E7D32; padding:10px 14px; font-size:13px; margin:14px 0 18px; }
+  table { border-collapse:collapse; font-size:12.5px; margin:12px 0; width:100%; }
+  th, td { border:1px solid #ccc; padding:5px 8px; text-align:left; vertical-align:top; }
+  th { background:#eef4fb; position:sticky; top:0; }
+  code { background:#eee; padding:1px 4px; border-radius:3px; font-size:11.5px; }
+  .ref { font-family: ui-monospace, Menlo, monospace; white-space:nowrap; }
+  .q    { background:#E2E8D5; } .nav  { background:#C9C2DE; } .cons { background:#9DB7D4; }
+  .rv   { background:#9EFF4D; } .c48  { background:#FFA500; } .cj   { background:#FFF34D; }
+  .u    { background:#FF4D4D; } .fin  { background:#DDDDDD; }
+  .fanin td { background:#FFF4CC; }
+  .counts { display:flex; gap:18px; flex-wrap:wrap; margin:10px 0; }
+  .counts div { background:#0176d3; color:#fff; border-radius:6px; padding:8px 14px; font-size:13px; }
+  .counts b { font-size:18px; display:block; }
+</style>
+</head>
+<body>
+
+<h1><code>PARCOURS_EP – FUITE CHEZ UN PARTICULIER</code> — saisi en <b>records</b></h1>
+<div class="note">
+  Démonstration <b>conception</b> (rien n'est déployé) : le logigramme <b>factorisé</b> traduit dans les objets du modèle data-driven.
+  Les clés <span class="ref">N_XXX</span> reprennent les identifiants du diagramme <code>EP_Fuite_Particulier_interpretation_factorise.html</code> pour recoupement direct.
+  À l'exécution, ces records sont lus par le <b>composant LWC générique unique</b> (le « moteur » décrit dans <code>Architecture_DataDriven_Suez.html</code> §7) — le <b>même</b> pour les 100 parcours : ni flow ni code spécifiques à ce parcours.
+</div>
+<div class="counts">
+  <div><b>1</b> Parcours__c</div>
+  <div><b>36</b> Noeud__c</div>
+  <div><b>53</b> Transition__c</div>
+  <div><b>6</b> ChampSaisie__c</div>
+</div>
+
+<div class="ok">
+  <b>Comment le moteur (LWC générique) sait par où commencer et où aller ?</b><br/>
+  • <b>Premier nœud</b> : donné explicitement par <code>Parcours__c.NoeudDepart_FK</code> (ici <span class="ref">N_ID</span>). Il n'y a <b>aucun « numéro d'ordre »</b> sur les nœuds.<br/>
+  • <b>Suite &amp; bifurcations</b> : l'ordre n'est pas stocké, il <b>émerge</b> en suivant les <code>Transition__c</code> (c'est un <b>graphe</b>, pas une liste). Un nœud à <b>1 transition sortante</b> = on enchaîne tout droit (<span class="ref">N_ID → N_LOC</span>). Un nœud à <b>plusieurs transitions sortantes</b> = une bifurcation : chaque réponse de l'agent choisit sa cible (<span class="ref">N_LOC</span> : « Dans votre propriété » → N_EAU, « Dans la rue » → N_NAVDP).<br/>
+  • <code>Ordre</code> ne décide <b>pas</b> où l'on va — il ne fait que <b>trier l'affichage</b> des choix à l'écran. C'est la <b>réponse</b> (= la transition suivie) qui décide de la cible.<br/>
+  • <b>Actions</b> : même règle. L'ordre des créations = l'ordre des nœuds Action dans la chaîne. Ex. le RV J+3–J+9 = <span class="ref">N_RVCETJ_1 → N_RVCETJ_2</span> : l'Event J+3 est créé avant le J+9 <b>parce que</b> son nœud précède l'autre.
+</div>
+
+<h2>1. Parcours__c (1 record)</h2>
+<table>
+  <tr><th>Réf</th><th>Code</th><th>Libelle</th><th>Version</th><th>Statut</th><th>Categorie</th><th>NoeudDepart_FK</th></tr>
+  <tr><td class="ref">P_EP_FUITE</td><td>EP_FUITE_PART</td><td>PARCOURS_EP – FUITE CHEZ UN PARTICULIER</td><td>1</td><td>Actif</td><td>Eau potable</td><td class="ref">N_ID</td></tr>
+</table>
+
+<h2>2. ChampSaisie__c — écran d'identification (N_ID)</h2>
+<table>
+  <tr><th>Réf</th><th>Noeud_FK</th><th>Libelle</th><th>TypeChamp</th><th>MappageCible (option.)</th><th>Ordre</th></tr>
+  <tr><td class="ref">CS1</td><td class="ref">N_ID</td><td>Nom (rappel)</td><td>Text</td><td>—</td><td>1</td></tr>
+  <tr><td class="ref">CS2</td><td class="ref">N_ID</td><td>Référence client</td><td>Text</td><td>contrôle contrat</td><td>2</td></tr>
+  <tr><td class="ref">CS3</td><td class="ref">N_ID</td><td>Adresse concernée</td><td>Text</td><td>contrôle contrat</td><td>3</td></tr>
+  <tr><td class="ref">CS4</td><td class="ref">N_ID</td><td>Téléphone</td><td>Phone</td><td><code>{client}.Phone</code></td><td>4</td></tr>
+  <tr><td class="ref">CS5</td><td class="ref">N_ID</td><td>Portable</td><td>Phone</td><td><code>{client}.PersonMobilePhone</code></td><td>5</td></tr>
+  <tr><td class="ref">CS6</td><td class="ref">N_ID</td><td>Mail</td><td>Email</td><td><code>{client}.PersonEmail</code></td><td>6</td></tr>
+</table>
+<div class="ok" style="font-size:12.5px;">
+  <b>Sémantique de <code>MappageCible</code> (recopie vers une fiche) :</b> un chemin dont le <b>dernier segment = le champ à écrire</b> et le <b>préfixe = le record à atteindre</b> (racine = un jeton de session <code>{client}</code> / <code>{case}</code>, ou le type d'origine <code>Case.Account.…</code>).
+  <ul style="margin:6px 0 0 18px; padding:0;">
+    <li><code>{client}.Phone</code> → met à jour le champ <code>Phone</code> du Person Account de la session.</li>
+    <li>Le jeton <code>{client}</code> est résolu que le parcours démarre d'un <b>Case</b> (via <code>Case.AccountId</code>) ou d'un <b>Account</b> → <b>une seule valeur</b> valable partout.</li>
+    <li>Le moteur <b>regroupe</b> tous les ChampSaisie visant le même record → <b>un seul <code>update</code></b> par record (gouverneurs + cohérence).</li>
+    <li><b>Person Account :</b> on écrit <code>{client}.PersonEmail</code> / <code>{client}.PersonMobilePhone</code> (champs « personne » de l'Account), <b>pas</b> <code>Contact.*</code> qui n'est pas adressable ainsi.</li>
+    <li><code>«&nbsp;contrôle contrat&nbsp;»</code> (CS2/CS3) et <code>—</code> (CS1) = aucune recopie : saisie de vérification, uniquement tracée dans <code>ReponseSaisie__c</code>.</li>
+  </ul>
+  <b>État actuel :</b> ces mappings sont <b>déclarés dans la donnée</b> ; la recopie est activée quand le moteur implémente l'étape « ChampSaisie à MappageCible non vide → <code>put</code> + <code>update</code> » (phase ultérieure). La trace dans <code>ReponseSaisie__c</code>, elle, est systématique.
+</div>
+
+<h2>3. Noeud__c (36 records)</h2>
+<table>
+  <tr><th>Réf</th><th>Type</th><th>Texte / libellé</th><th>TypeAction</th><th>CodePresta</th><th>ObjetCible</th></tr>
+  <tr><td class="ref">N_ID</td><td class="q">Question (saisie)</td><td>Identification — voir ChampSaisie</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_LOC</td><td class="q">Question</td><td>Où se trouve la fuite ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_EAU</td><td class="q">Question</td><td>Eau propre ou eau sale ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_IE</td><td class="q">Question</td><td>À l'intérieur ou à l'extérieur ? (+ appart/maison, informatif)</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_FOSSE</td><td class="q">Question</td><td>Compteur dans une fosse (regard) ? La fosse déborde-t-elle ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_EACCD</td><td class="q">Question</td><td>Lieu accessible à toute heure (sans votre présence) ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_EACCN</td><td class="q">Question</td><td>Lieu accessible à toute heure (sans votre présence) ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_INT</td><td class="q">Question</td><td>Fuite entre compteur et rue, ou entre compteur et habitation ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_OU</td><td class="q">Question</td><td>Où est située précisément la fuite ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_AMPC</td><td class="q">Question</td><td>Ampleur de la fuite ? (temps pour remplir un seau) — CET05</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_AMPB</td><td class="q">Question</td><td>Ampleur de la fuite ? (temps pour remplir un seau) — BEC03</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_CY</td><td class="q">Question</td><td>Lieu accessible ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_CO</td><td class="q">Question</td><td>Lieu accessible ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_CR</td><td class="q">Question</td><td>Lieu accessible ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_BY</td><td class="q">Question</td><td>Lieu accessible ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_BO</td><td class="q">Question</td><td>Lieu accessible ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_BR</td><td class="q">Question</td><td>Lieu accessible ?</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_NAVDP</td><td class="nav">Navigation</td><td>Débranche vers « EP – FUITE DOMAINE PUBLIC » · <code>ParcoursCible_FK</code> → parcours 19</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_NAVAS</td><td class="nav">Navigation</td><td>Débranche vers « Assainissement » · <code>ParcoursCible_FK</code> (parcours à venir)</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_CONS</td><td class="cons">Conseil</td><td>Domaine privatif ; resp. SUEZ entre rue et compteur ; voir un pro ; fermer le robinet avant compteur</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_RVCET48</td><td class="rv">Action</td><td>Prise de RV (&lt;48h)</td><td>Créer</td><td>—</td><td>Event</td></tr>
+  <tr><td class="ref">N_RVCETJ_1</td><td class="rv">Action</td><td>Prise de RV — 1<sup>re</sup> visite (J+3)</td><td>Créer</td><td>—</td><td>Event</td></tr>
+  <tr><td class="ref">N_RVCETJ_2</td><td class="rv">Action</td><td>Prise de RV — 2<sup>e</sup> visite (J+9)</td><td>Créer</td><td>—</td><td>Event</td></tr>
+  <tr><td class="ref">N_RVCETU</td><td class="rv">Action</td><td>Prise de RV immédiate</td><td>Créer</td><td>—</td><td>Event</td></tr>
+  <tr><td class="ref">N_RVBEC48</td><td class="rv">Action</td><td>Prise de RV (&lt;48h)</td><td>Créer</td><td>—</td><td>Event</td></tr>
+  <tr><td class="ref">N_RVBECJ_1</td><td class="rv">Action</td><td>Prise de RV — 1<sup>re</sup> visite (J+3)</td><td>Créer</td><td>—</td><td>Event</td></tr>
+  <tr><td class="ref">N_RVBECJ_2</td><td class="rv">Action</td><td>Prise de RV — 2<sup>e</sup> visite (J+9)</td><td>Créer</td><td>—</td><td>Event</td></tr>
+  <tr><td class="ref">N_RVBECU</td><td class="rv">Action</td><td>Prise de RV immédiate</td><td>Créer</td><td>—</td><td>Event</td></tr>
+  <tr><td class="ref">N_CET48</td><td class="c48">Action</td><td>Intervention CET05 &lt;48h</td><td>Créer</td><td>CET05</td><td>WorkOrder</td></tr>
+  <tr><td class="ref">N_CETJ</td><td class="cj">Action</td><td>Intervention CET05 J+2–J+7</td><td>Créer</td><td>CET05</td><td>WorkOrder</td></tr>
+  <tr><td class="ref">N_CETU</td><td class="u">Action</td><td>Intervention CET05 URGENTE</td><td>Créer</td><td>CET05</td><td>WorkOrder</td></tr>
+  <tr><td class="ref">N_BEC48</td><td class="c48">Action</td><td>Intervention BEC03 &lt;48h</td><td>Créer</td><td>BEC03</td><td>WorkOrder</td></tr>
+  <tr><td class="ref">N_BECJ</td><td class="cj">Action</td><td>Intervention BEC03 J+2–J+7</td><td>Créer</td><td>BEC03</td><td>WorkOrder</td></tr>
+  <tr><td class="ref">N_BECU</td><td class="u">Action</td><td>Intervention BEC03 URGENTE</td><td>Créer</td><td>BEC03</td><td>WorkOrder</td></tr>
+  <tr><td class="ref">N_FIN</td><td class="fin">Fin</td><td>Fin du parcours</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_FINHS</td><td class="fin">Fin</td><td>Fin — hors schéma (routage à définir)</td><td>—</td><td>—</td><td>—</td></tr>
+</table>
+<div class="note">
+  <b>Modèle B :</b> chaque nœud Action crée <b>un seul</b> record (<code>ObjetCible</code>) ; le détail des champs est dans <code>MappageChamps_JSON</code> (§3b). Le RV « J+3–J+9 » = <b>2 Events</b> → <b>2 nœuds enchaînés</b> (<span class="ref">N_RVCETJ_1 → N_RVCETJ_2</span> et <span class="ref">N_RVBECJ_1 → N_RVBECJ_2</span>). Plus d'objet <code>ModeleAction__c</code>, plus de champ <code>Delai</code> ni de <code>Parametres_JSON = { nbEvents: 2 }</code> : la date vit dans le JSON (<code>ActivityDate:'TODAY+N'</code>).
+</div>
+
+<h2>3b. MappageChamps_JSON des nœuds Action — « quels champs créer »</h2>
+<table>
+  <tr><th>Réf</th><th>ObjetCible</th><th>MappageChamps_JSON</th></tr>
+  <tr><td class="ref">N_RVCET48</td><td>Event</td><td><code>{ Subject:'RV CET05 (&lt;48h)', ActivityDate:'TODAY+2', WhoId:'{client}', WhatId:'{case}' }</code></td></tr>
+  <tr><td class="ref">N_RVCETJ_1</td><td>Event</td><td><code>{ Subject:'RV CET05 — visite 1', ActivityDate:'TODAY+3', WhoId:'{client}', WhatId:'{case}' }</code></td></tr>
+  <tr><td class="ref">N_RVCETJ_2</td><td>Event</td><td><code>{ Subject:'RV CET05 — visite 2', ActivityDate:'TODAY+9', WhoId:'{client}', WhatId:'{case}' }</code></td></tr>
+  <tr><td class="ref">N_RVCETU</td><td>Event</td><td><code>{ Subject:'RV CET05 (immédiat)', ActivityDate:'TODAY', WhoId:'{client}', WhatId:'{case}' }</code></td></tr>
+  <tr><td class="ref">N_RVBEC48</td><td>Event</td><td><code>{ Subject:'RV BEC03 (&lt;48h)', ActivityDate:'TODAY+2', WhoId:'{client}', WhatId:'{case}' }</code></td></tr>
+  <tr><td class="ref">N_RVBECJ_1</td><td>Event</td><td><code>{ Subject:'RV BEC03 — visite 1', ActivityDate:'TODAY+3', WhoId:'{client}', WhatId:'{case}' }</code></td></tr>
+  <tr><td class="ref">N_RVBECJ_2</td><td>Event</td><td><code>{ Subject:'RV BEC03 — visite 2', ActivityDate:'TODAY+9', WhoId:'{client}', WhatId:'{case}' }</code></td></tr>
+  <tr><td class="ref">N_RVBECU</td><td>Event</td><td><code>{ Subject:'RV BEC03 (immédiat)', ActivityDate:'TODAY', WhoId:'{client}', WhatId:'{case}' }</code></td></tr>
+  <tr><td class="ref">N_CET48</td><td>WorkOrder</td><td><code>{ WorkType:'{noeud.CodePresta}', Priority:'&lt;48h', AccountId:'{client}', CaseId:'{case}', Subject:'{localisation} / {ampleur} / {urgence}' }</code></td></tr>
+  <tr><td class="ref">N_CETJ</td><td>WorkOrder</td><td><code>{ WorkType:'{noeud.CodePresta}', Priority:'J+2–J+7', AccountId:'{client}', CaseId:'{case}', Subject:'{localisation} / {ampleur} / {urgence}' }</code></td></tr>
+  <tr><td class="ref">N_CETU</td><td>WorkOrder</td><td><code>{ WorkType:'{noeud.CodePresta}', Priority:'Urgent', AccountId:'{client}', CaseId:'{case}', Subject:'{localisation} / {ampleur} / {urgence}' }</code></td></tr>
+  <tr><td class="ref">N_BEC48</td><td>WorkOrder</td><td><code>{ WorkType:'{noeud.CodePresta}', Priority:'&lt;48h', AccountId:'{client}', CaseId:'{case}', Subject:'{localisation} / {ampleur} / {urgence}' }</code></td></tr>
+  <tr><td class="ref">N_BECJ</td><td>WorkOrder</td><td><code>{ WorkType:'{noeud.CodePresta}', Priority:'J+2–J+7', AccountId:'{client}', CaseId:'{case}', Subject:'{localisation} / {ampleur} / {urgence}' }</code></td></tr>
+  <tr><td class="ref">N_BECU</td><td>WorkOrder</td><td><code>{ WorkType:'{noeud.CodePresta}', Priority:'Urgent', AccountId:'{client}', CaseId:'{case}', Subject:'{localisation} / {ampleur} / {urgence}' }</code></td></tr>
+</table>
+<div class="note">
+  <b>Jetons résolus à l'exécution</b> par le handler générique : <code>{client}</code>/<code>{case}</code> (origine de la Session), <code>TODAY+N</code> (date calculée), <code>{noeud.CodePresta}</code> (le code porté par le nœud → <code>WorkType</code>), <code>{localisation}</code>/<code>{ampleur}</code>/<code>{urgence}</code> (réponses fusionnées depuis <code>ReponseSaisie__c</code> → l'ancien <code>TemplateCommentaire</code>). <code>Priority</code> reprend le libellé SLA Suez (&lt;48h · J+2–J+7 · Urgent), mappé sur <code>WorkOrder.Priority</code>.
+</div>
+
+<h2>4. Transition__c (53 records) — les « réponses » de chaque question</h2>
+<table>
+  <tr><th>Réf source</th><th>Libelle_reponse</th><th>Cible</th><th>Ordre</th></tr>
+  <tr><td class="ref">N_ID</td><td>Continuer</td><td class="ref">N_LOC</td><td>1</td></tr>
+  <tr><td class="ref">N_LOC</td><td>Dans votre propriété</td><td class="ref">N_EAU</td><td>1</td></tr>
+  <tr><td class="ref">N_LOC</td><td>Dans la rue / voie publique</td><td class="ref">N_NAVDP</td><td>2</td></tr>
+  <tr><td class="ref">N_EAU</td><td>Eau propre</td><td class="ref">N_IE</td><td>1</td></tr>
+  <tr><td class="ref">N_EAU</td><td>Eau sale (couleur / odeur)</td><td class="ref">N_NAVAS</td><td>2</td></tr>
+  <tr><td class="ref">N_IE</td><td>Extérieur</td><td class="ref">N_FOSSE</td><td>1</td></tr>
+  <tr><td class="ref">N_IE</td><td>Intérieur</td><td class="ref">N_INT</td><td>2</td></tr>
+  <tr><td class="ref">N_FOSSE</td><td>Oui, la fosse déborde</td><td class="ref">N_EACCD</td><td>1</td></tr>
+  <tr><td class="ref">N_FOSSE</td><td>Oui, ne déborde pas</td><td class="ref">N_EACCN</td><td>2</td></tr>
+  <tr><td class="ref">N_FOSSE</td><td>Non, pas dans une fosse</td><td class="ref">N_FINHS</td><td>3</td></tr>
+  <tr class="fanin"><td class="ref">N_EACCD</td><td>Oui</td><td class="ref">N_CET48</td><td>1</td></tr>
+  <tr><td class="ref">N_EACCD</td><td>Non</td><td class="ref">N_RVCET48</td><td>2</td></tr>
+  <tr class="fanin"><td class="ref">N_EACCN</td><td>Oui</td><td class="ref">N_CETJ</td><td>1</td></tr>
+  <tr><td class="ref">N_EACCN</td><td>Non</td><td class="ref">N_RVCETJ_1</td><td>2</td></tr>
+  <tr><td class="ref">N_INT</td><td>Entre compteur et rue</td><td class="ref">N_OU</td><td>1</td></tr>
+  <tr><td class="ref">N_INT</td><td>Entre compteur et habitation</td><td class="ref">N_CONS</td><td>2</td></tr>
+  <tr><td class="ref">N_OU</td><td>Compteur / robinet / joint</td><td class="ref">N_AMPC</td><td>1</td></tr>
+  <tr><td class="ref">N_OU</td><td>Canalisation (depuis la rue)</td><td class="ref">N_AMPB</td><td>2</td></tr>
+  <tr><td class="ref">N_AMPC</td><td>Goutte à goutte / seau en 1 j</td><td class="ref">N_CY</td><td>1</td></tr>
+  <tr><td class="ref">N_AMPC</td><td>Filet d'eau / seau en qq heures</td><td class="ref">N_CO</td><td>2</td></tr>
+  <tr><td class="ref">N_AMPC</td><td>Seau en qq minutes / inondation</td><td class="ref">N_CR</td><td>3</td></tr>
+  <tr><td class="ref">N_AMPB</td><td>Goutte à goutte / seau en 1 j</td><td class="ref">N_BY</td><td>1</td></tr>
+  <tr><td class="ref">N_AMPB</td><td>Filet d'eau / seau en qq heures</td><td class="ref">N_BO</td><td>2</td></tr>
+  <tr><td class="ref">N_AMPB</td><td>Seau en qq minutes / inondation</td><td class="ref">N_BR</td><td>3</td></tr>
+  <tr class="fanin"><td class="ref">N_CY</td><td>Oui</td><td class="ref">N_CETJ</td><td>1</td></tr>
+  <tr><td class="ref">N_CY</td><td>Non</td><td class="ref">N_RVCETJ_1</td><td>2</td></tr>
+  <tr class="fanin"><td class="ref">N_CO</td><td>Oui</td><td class="ref">N_CET48</td><td>1</td></tr>
+  <tr><td class="ref">N_CO</td><td>Non</td><td class="ref">N_RVCET48</td><td>2</td></tr>
+  <tr class="fanin"><td class="ref">N_CR</td><td>Oui</td><td class="ref">N_CETU</td><td>1</td></tr>
+  <tr><td class="ref">N_CR</td><td>Non</td><td class="ref">N_RVCETU</td><td>2</td></tr>
+  <tr class="fanin"><td class="ref">N_BY</td><td>Oui</td><td class="ref">N_BECJ</td><td>1</td></tr>
+  <tr><td class="ref">N_BY</td><td>Non</td><td class="ref">N_RVBECJ_1</td><td>2</td></tr>
+  <tr class="fanin"><td class="ref">N_BO</td><td>Oui</td><td class="ref">N_BEC48</td><td>1</td></tr>
+  <tr><td class="ref">N_BO</td><td>Non</td><td class="ref">N_RVBEC48</td><td>2</td></tr>
+  <tr class="fanin"><td class="ref">N_BR</td><td>Oui</td><td class="ref">N_BECU</td><td>1</td></tr>
+  <tr><td class="ref">N_BR</td><td>Non</td><td class="ref">N_RVBECU</td><td>2</td></tr>
+  <tr><td class="ref">N_NAVDP</td><td>➡️ Aller au parcours « Domaine public »</td><td class="ref">N_FIN</td><td>1</td></tr>
+  <tr><td class="ref">N_NAVAS</td><td>➡️ Aller au parcours « Assainissement »</td><td class="ref">N_FIN</td><td>1</td></tr>
+  <tr><td class="ref">N_CONS</td><td>Fin de l'appel</td><td class="ref">N_FIN</td><td>1</td></tr>
+  <tr class="fanin"><td class="ref">N_RVCET48</td><td>(après prise de RV)</td><td class="ref">N_CET48</td><td>1</td></tr>
+  <tr><td class="ref">N_RVCETJ_1</td><td>(enchaîne — 2<sup>e</sup> visite)</td><td class="ref">N_RVCETJ_2</td><td>1</td></tr>
+  <tr class="fanin"><td class="ref">N_RVCETJ_2</td><td>(après prise de RV)</td><td class="ref">N_CETJ</td><td>1</td></tr>
+  <tr class="fanin"><td class="ref">N_RVCETU</td><td>(après prise de RV)</td><td class="ref">N_CETU</td><td>1</td></tr>
+  <tr class="fanin"><td class="ref">N_RVBEC48</td><td>(après prise de RV)</td><td class="ref">N_BEC48</td><td>1</td></tr>
+  <tr><td class="ref">N_RVBECJ_1</td><td>(enchaîne — 2<sup>e</sup> visite)</td><td class="ref">N_RVBECJ_2</td><td>1</td></tr>
+  <tr class="fanin"><td class="ref">N_RVBECJ_2</td><td>(après prise de RV)</td><td class="ref">N_BECJ</td><td>1</td></tr>
+  <tr class="fanin"><td class="ref">N_RVBECU</td><td>(après prise de RV)</td><td class="ref">N_BECU</td><td>1</td></tr>
+  <tr><td class="ref">N_CET48</td><td>(fin)</td><td class="ref">N_FIN</td><td>1</td></tr>
+  <tr><td class="ref">N_CETJ</td><td>(fin)</td><td class="ref">N_FIN</td><td>1</td></tr>
+  <tr><td class="ref">N_CETU</td><td>(fin)</td><td class="ref">N_FIN</td><td>1</td></tr>
+  <tr><td class="ref">N_BEC48</td><td>(fin)</td><td class="ref">N_FIN</td><td>1</td></tr>
+  <tr><td class="ref">N_BECJ</td><td>(fin)</td><td class="ref">N_FIN</td><td>1</td></tr>
+  <tr><td class="ref">N_BECU</td><td>(fin)</td><td class="ref">N_FIN</td><td>1</td></tr>
+</table>
+<div class="note">
+  Les lignes <span style="background:#FFF4CC;padding:1px 4px;">surlignées</span> sont les transitions qui <b>convergent</b> sur un nœud partagé (fan-in) — c'est là que vit la factorisation, désormais <b>explicite</b> dans la donnée.
+</div>
+
+<h2>5. Nœuds partagés (fan-in) — la déduplication, visible</h2>
+<table>
+  <tr><th>Nœud partagé</th><th>Transitions entrantes</th><th>Nb</th></tr>
+  <tr><td class="ref">N_CET48</td><td>N_EACCD (Oui) · N_CO (Oui) · N_RVCET48</td><td>3</td></tr>
+  <tr><td class="ref">N_CETJ</td><td>N_EACCN (Oui) · N_CY (Oui) · N_RVCETJ_2</td><td>3</td></tr>
+  <tr><td class="ref">N_CETU</td><td>N_CR (Oui) · N_RVCETU</td><td>2</td></tr>
+  <tr><td class="ref">N_BEC48</td><td>N_BO (Oui) · N_RVBEC48</td><td>2</td></tr>
+  <tr><td class="ref">N_BECJ</td><td>N_BY (Oui) · N_RVBECJ_2</td><td>2</td></tr>
+  <tr><td class="ref">N_BECU</td><td>N_BR (Oui) · N_RVBECU</td><td>2</td></tr>
+  <tr><td class="ref">N_FIN</td><td>N_NAVDP · N_NAVAS · N_CONS · 6 interventions</td><td>9</td></tr>
+</table>
+<div class="ok">
+  Sans factorisation, chacune de ces cibles serait <b>dupliquée</b> par branche (comme dans le diagramme d'origine : ECETO1/ECETO2, ECETY1/ECETY2…). Ici, <b>6 interventions + 8 nœuds RV</b> (dont les 2 RV « J+3–J+9 » comptant chacun 2 nœuds enchaînés) <b>+ 1 fin</b> sont des records <b>uniques</b> réutilisés. Ajouter un chemin qui mène à la même action = <b>1 transition de plus</b>, 0 nœud en plus.
+</div>
+
+</body>
+</html>

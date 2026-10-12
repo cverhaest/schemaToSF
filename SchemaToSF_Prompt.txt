@@ -1,0 +1,17 @@
+Je dispose de parcours métiers représentés sous forme de schéma. Il s'agit de parcours/scripts pour des agents d'un service client. Je souhaiterai implémenter ces parcours sous forme de Screen Flow Salesforce.
+Le libellé du flow doit reprendre le titre en entête du schéma préfixé de "PARCOURS_". Idem pour le nom technique du flow avec en plus en suffixe "_Flow" Par exemple, si l'entête affiche "EP – FUITE CHEZ UN PARTICULIER", alors le libellé du flow doit être "PARCOURS_EP – FUITE CHEZ UN PARTICULIER" et son nom technique "PARCOURS_EP_–_FUITE_CHEZ_UN_PARTICULIER_Flow".
+Il est important de prendre en compte la légende : 
+- "Question à poser au client" signifie que cela doit présenter à l'utilisateur un écran permettant de poser la question. 
+Si certaines questions s'enchainent sans contrainte particulière et qu'elles sont liées alors il est préférable de poser l'intégralité des questions dans le même écran. Par exemple si les 2 questions suivantes s'enchainent "Vous me rappelez votre nom svp ?" et "Pouvez-vous me communiquer votre référence client ?" alors elles peuvent être posées dans le même écran.
+Il faut bien prendre en compte toutes les réponses possibles dans une question. Par exemple la question "Où se trouve la fuite ? Dans votre propriété ou dans la rue ?", se traduit par la question "Où se trouve la fuite ?" avec 2 réponses possibles "Dans votre propriété" et "Dans la rue".
+Parfois plusieurs questions peuvent être posé dans le même noeud du schéma. Par exemple la question "A l’intérieur ou à l’extérieur? Appartement ou maison?", se traduit par 2 questions "A l’intérieur ou à l’extérieur?" et "Appartement ou maison?".
+- "Navigation dans le script" signifie qu'un autre flow/sous-flow devra être appelé à ce moment là. Pour le moment je te demande de mettre des placeholders sans appel des sous flows. Nous verrons plus tard comment précéder.
+- "Conseil à donner au client" signifie que l'utilisateur qui execute le flow devra disposer de ces éléments/commentaires comme aide. Il pourra s'appuyer sur ces commentaires pour échanger avec le client.
+- "Action du Téléconseiller", "Déclenchement d’une intervention urgente", "Déclenchement d’une intervention délai court (<48h)", "Déclenchement d’une intervention délai court (J+2–J+7)" signifient de réelles actions à mener. Ceux seront à termes des véritables actions Salesforce du type "Create Record", mais pour le moment je te demande de mettre des placeholders sans réalisation d'action particulière. Nous verrons plus tard comment précéder.
+Bien entendu les réponses au question devront être à terme stockées dans Salesforce, les actions devra être mise en oeuvre mais pour le moment je souhaiterai disposer du Screen Flow qui applique la logique d'enchainement des écrans mais sans s'appuyer sur des objets Salesforce.
+Si des noeuds se répêtent et qu'ils déclenchent bien exactement les mêmes actions (donc même placeholders) alors le flow ne doit contenir qu'un seul noeud pour tous ces noeuds identiques.
+Avant de créer les metadata Salesforce. Je te demande de me montrer comment tu as interpréter le schéma pour éviter les aller-retours.
+Pour chaque metadata de flow Salesforce construit, je te demande de réaliser une étape de vérification pour t'assurer que le flow correspond bien à ce qui est décrit dans le schéma. Idéalement j'aimerai pouvoir visualiser à quoi cela va ressemble avant de déployer les metadata.
+Les schémas se trouvent dans le dossier "schema" de ce projet.
+N'hésite pas à me poser des question si tu as besoin de précision.
+On y va ?
