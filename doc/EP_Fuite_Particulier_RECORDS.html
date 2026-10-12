@@ -29,8 +29,8 @@
 <h1><code>PARCOURS_EP – FUITE CHEZ UN PARTICULIER</code> — saisi en <b>records</b></h1>
 <div class="note">
   Démonstration <b>conception</b> (rien n'est déployé) : le logigramme <b>factorisé</b> traduit dans les objets du modèle data-driven.
-  Les clés <span class="ref">N_XXX</span> reprennent les identifiants du diagramme <code>EP_Fuite_Particulier_interpretation_factorise.html</code> pour recoupement direct.
-  À l'exécution, ces records sont lus par le <b>composant LWC générique unique</b> (le « moteur » décrit dans <code>Architecture_DataDriven_Suez.html</code> §7) — le <b>même</b> pour les 100 parcours : ni flow ni code spécifiques à ce parcours.
+  Les clés <span class="ref">N_XXX</span> reprennent les identifiants des étapes du logigramme <code>interpretation/EP_Fuite_Particulier_interpretation.html</code> pour recoupement direct (nœuds répétés fusionnés, comme dans le modèle data-driven).
+  À l'exécution, ces records sont lus par le <b>composant LWC générique unique</b> (le « moteur » décrit dans <code>Architecture_DataDriven.html</code> §7) — le <b>même</b> pour les 100 parcours : ni flow ni code spécifiques à ce parcours.
 </div>
 <div class="counts">
   <div><b>1</b> Parcours__c</div>
@@ -97,7 +97,7 @@
   <tr><td class="ref">N_BR</td><td class="q">Question</td><td>Lieu accessible ?</td><td>—</td><td>—</td><td>—</td></tr>
   <tr><td class="ref">N_NAVDP</td><td class="nav">Navigation</td><td>Débranche vers « EP – FUITE DOMAINE PUBLIC » · <code>ParcoursCible_FK</code> → parcours 19</td><td>—</td><td>—</td><td>—</td></tr>
   <tr><td class="ref">N_NAVAS</td><td class="nav">Navigation</td><td>Débranche vers « Assainissement » · <code>ParcoursCible_FK</code> (parcours à venir)</td><td>—</td><td>—</td><td>—</td></tr>
-  <tr><td class="ref">N_CONS</td><td class="cons">Conseil</td><td>Domaine privatif ; resp. SUEZ entre rue et compteur ; voir un pro ; fermer le robinet avant compteur</td><td>—</td><td>—</td><td>—</td></tr>
+  <tr><td class="ref">N_CONS</td><td class="cons">Conseil</td><td>Domaine privatif ; resp. exploitant entre rue et compteur ; voir un pro ; fermer le robinet avant compteur</td><td>—</td><td>—</td><td>—</td></tr>
   <tr><td class="ref">N_RVCET48</td><td class="rv">Action</td><td>Prise de RV (&lt;48h)</td><td>Créer</td><td>—</td><td>Event</td></tr>
   <tr><td class="ref">N_RVCETJ_1</td><td class="rv">Action</td><td>Prise de RV — 1<sup>re</sup> visite (J+3)</td><td>Créer</td><td>—</td><td>Event</td></tr>
   <tr><td class="ref">N_RVCETJ_2</td><td class="rv">Action</td><td>Prise de RV — 2<sup>e</sup> visite (J+9)</td><td>Créer</td><td>—</td><td>Event</td></tr>
@@ -138,7 +138,7 @@
   <tr><td class="ref">N_BECU</td><td>WorkOrder</td><td><code>{ WorkType:'{noeud.CodePresta}', Priority:'Urgent', AccountId:'{client}', CaseId:'{case}', Subject:'{localisation} / {ampleur} / {urgence}' }</code></td></tr>
 </table>
 <div class="note">
-  <b>Jetons résolus à l'exécution</b> par le handler générique : <code>{client}</code>/<code>{case}</code> (origine de la Session), <code>TODAY+N</code> (date calculée), <code>{noeud.CodePresta}</code> (le code porté par le nœud → <code>WorkType</code>), <code>{localisation}</code>/<code>{ampleur}</code>/<code>{urgence}</code> (réponses fusionnées depuis <code>ReponseSaisie__c</code> → l'ancien <code>TemplateCommentaire</code>). <code>Priority</code> reprend le libellé SLA Suez (&lt;48h · J+2–J+7 · Urgent), mappé sur <code>WorkOrder.Priority</code>.
+  <b>Jetons résolus à l'exécution</b> par le handler générique : <code>{client}</code>/<code>{case}</code> (origine de la Session), <code>TODAY+N</code> (date calculée), <code>{noeud.CodePresta}</code> (le code porté par le nœud → <code>WorkType</code>), <code>{localisation}</code>/<code>{ampleur}</code>/<code>{urgence}</code> (réponses fusionnées depuis <code>ReponseSaisie__c</code> → l'ancien <code>TemplateCommentaire</code>). <code>Priority</code> reprend le libellé SLA du logigramme (&lt;48h · J+2–J+7 · Urgent), mappé sur <code>WorkOrder.Priority</code>.
 </div>
 
 <h2>4. Transition__c (53 records) — les « réponses » de chaque question</h2>

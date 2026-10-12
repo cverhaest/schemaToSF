@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Approche data-driven — Parcours Suez (1 moteur + données)</title>
+<title>Approche data-driven — Parcours guidés (1 moteur + données)</title>
 <style>
   body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 24px; color:#1a1a1a; line-height:1.45; }
   h1 { font-size: 22px; }
@@ -27,7 +27,7 @@
 
 <h1>Approche <b>data-driven</b> : 1 moteur + les parcours en données</h1>
 <div class="note">
-  Document de <b>conception / aide à la décision</b> (présales Suez). <b>Rien n'est déployé.</b>
+  Document de <b>conception / aide à la décision</b> (présales). <b>Rien n'est déployé.</b>
   Deux familles d'objets : <b>Définition</b> (le parcours tel qu'il est écrit) et <b>Exécution</b> (ce qui se passe quand un agent le déroule depuis un Account/Case).
 </div>
 
@@ -346,7 +346,7 @@ flowchart LR
 </pre>
 <div class="note">
   <b>Pourquoi un handler, et pas un simple <code>insert</code> ?</b> Les valeurs du JSON sont des <b>jetons</b> (<code>TODAY+3</code>, <code>{client}</code>, <code>{noeud.CodePresta}</code>, <code>{ampleur}</code>), pas des valeurs natives — ils n'existent qu'à l'exécution. Un <b>résolveur générique</b> (écrit <b>une seule fois</b>) : (1) crée le SObject dynamiquement (<code>ObjetCible</code>), (2) résout chaque jeton, (3) <b>coerce</b> la String en type du champ (Date / Id / Number), puis (4) <code>insert</code> + <code>ActionExecutee__c</code>. Aucun code spécifique à un parcours. C'est aussi pourquoi un champ <code>Delai</code> séparé est inutile : le résolveur transforme déjà <code>TODAY+N</code> en date.<br/>
-  <b>Gravité SLA (<code>Priority</code>) :</b> le 2ᵉ parcours (domaine public) utilise <b>3 niveaux</b> issus de la légende Suez — <b>Urgent</b> (rouge), <b>&lt;48h</b> (orange), <b>J+2–J+7</b> (jaune). Ce sont <b>3 valeurs de la picklist <code>WorkOrder.Priority</code></b>, portées par le JSON du nœud — aucune logique en dur, juste la bonne valeur par nœud Action.
+  <b>Gravité SLA (<code>Priority</code>) :</b> le 2ᵉ parcours (domaine public) utilise <b>3 niveaux</b> issus de la légende du logigramme — <b>Urgent</b> (rouge), <b>&lt;48h</b> (orange), <b>J+2–J+7</b> (jaune). Ce sont <b>3 valeurs de la picklist <code>WorkOrder.Priority</code></b>, portées par le JSON du nœud — aucune logique en dur, juste la bonne valeur par nœud Action.
 </div>
 <div class="warn">
   <b>Vigilance :</b> création au <b>bon moment</b> (confirmation agent) ; <b>idempotence</b> via <code>ActionExecutee__c</code> (ne pas recréer si l'agent revient en arrière) ; gestion d'erreur (échec → message, parcours non bloqué).

@@ -68,7 +68,7 @@ flowchart TD
 
   %% ================= INTÉRIEUR =================
   INT{"La fuite se situe-t-elle entre votre compteur et la rue,<br/>ou entre votre compteur et votre habitation ?"}:::question
-  INT -->|"Entre compteur et habitation"| CONS["🟦 CONSEIL (écran placeholder)<br/>« Fuite sur le domaine privatif. Responsabilité SUEZ engagée<br/>entre la rue et votre compteur. Rapprochez-vous d'un<br/>professionnel. Fermer le robinet avant compteur. »"]:::conseil
+  INT -->|"Entre compteur et habitation"| CONS["🟦 CONSEIL (écran placeholder)<br/>« Fuite sur le domaine privatif. Responsabilité de l'exploitant engagée<br/>entre la rue et votre compteur. Rapprochez-vous d'un<br/>professionnel. Fermer le robinet avant compteur. »"]:::conseil
   INT -->|"Entre compteur et rue"| QOU{"Où est située précisément cette fuite ?"}:::question
 
   QOU -->|"Au niveau du compteur / du robinet / du joint"| AMPC{"Quelle est l'ampleur de la fuite ?<br/>(temps pour remplir un seau)<br/>— intervention CET05"}:::question

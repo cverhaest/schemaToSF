@@ -1,10 +1,10 @@
-# Parcours métiers Suez — moteur *data-driven* sur Salesforce
+# Parcours métiers — moteur *data-driven* sur Salesforce
 
 > **Statut : conception / spécifications.** Rien n'est déployé. Ce dépôt sert à **partager l'approche** avec l'équipe avant toute mise en œuvre sur Salesforce.
 
 ## 1. À quoi sert cette application
 
-Les conseillers du **service client Suez** s'appuient sur des **parcours métiers** (scripts guidés) pour traiter les appels : poser les bonnes questions au client, suivre les bifurcations selon ses réponses, donner les conseils adaptés, puis déclencher les actions qui en découlent (prise de rendez-vous, intervention urgente, etc.).
+Les conseillers d'un **service client** s'appuient sur des **parcours métiers** (scripts guidés) pour traiter les appels : poser les bonnes questions au client, suivre les bifurcations selon ses réponses, donner les conseils adaptés, puis déclencher les actions qui en découlent (prise de rendez-vous, intervention urgente, etc.).
 
 Ces parcours existent aujourd'hui sous forme de **logigrammes** (schémas). L'objectif est de les rendre **exécutables dans Salesforce**, directement depuis la fiche **Compte** ou **Requête (Case)**, pour **guider le conseiller pas à pas** et **créer automatiquement** les enregistrements métier associés.
 
@@ -68,15 +68,21 @@ Le même composant sert les **100 parcours**. Une action = **un DML décrit par 
 
 ## 4. Les spécifications (à ouvrir dans un navigateur)
 
-Les pages HTML du dossier [`interpretation/`](interpretation/) **sont** les spécifications. Elles s'ouvrent dans n'importe quel navigateur (diagrammes **Mermaid** inclus).
+Les spécifications sont les pages HTML du dossier [`doc/`](doc/) ; l'**interprétation des schémas d'origine** (logigrammes Mermaid) vit dans [`interpretation/`](interpretation/). Toutes s'ouvrent dans n'importe quel navigateur (diagrammes **Mermaid** inclus).
+
+**Spécifications — [`doc/`](doc/) :**
 
 | Fichier | Contenu |
 |---|---|
-| [`Architecture_DataDriven_Suez.html`](interpretation/Architecture_DataDriven_Suez.html) | **Document d'architecture** : modèle de données, lancement depuis Compte/Case, sélection du parcours, boucle du moteur, navigation inter-parcours, classe Apex générique. **Commencer par celui-ci.** |
-| [`Dictionnaire_Donnees_Parcours.html`](interpretation/Dictionnaire_Donnees_Parcours.html) | **Dictionnaire de données** : chaque objet/champ décrit, avec exemples. |
-| [`EP_Fuite_Particulier_RECORDS.html`](interpretation/EP_Fuite_Particulier_RECORDS.html) | **Exemple concret** : le parcours « EP – Fuite chez un particulier » entièrement traduit en enregistrements (preuve que le modèle tient). |
+| [`Architecture_DataDriven.html`](doc/Architecture_DataDriven.html) | **Document d'architecture** : modèle de données, lancement depuis Compte/Case, sélection du parcours, boucle du moteur, navigation inter-parcours, classe Apex générique. **Commencer par celui-ci.** |
+| [`Dictionnaire_Donnees_Parcours.html`](doc/Dictionnaire_Donnees_Parcours.html) | **Dictionnaire de données** : chaque objet/champ décrit, avec exemples. |
+| [`EP_Fuite_Particulier_RECORDS.html`](doc/EP_Fuite_Particulier_RECORDS.html) | **Exemple concret** : le parcours « EP – Fuite chez un particulier » entièrement traduit en enregistrements (preuve que le modèle tient). |
+
+**Interprétation des schémas — [`interpretation/`](interpretation/) :**
+
+| Fichier | Contenu |
+|---|---|
 | [`EP_Fuite_Particulier_interpretation.html`](interpretation/EP_Fuite_Particulier_interpretation.html) | Logigramme Mermaid du parcours (interprétation du schéma d'origine). |
-| [`EP_Fuite_Particulier_interpretation_factorise.html`](interpretation/EP_Fuite_Particulier_interpretation_factorise.html) | Même logigramme, **factorisé** (nœuds répétés fusionnés). |
 
 Les logigrammes d'origine (schémas sources) sont dans le dossier [`schema/`](schema/).
 
