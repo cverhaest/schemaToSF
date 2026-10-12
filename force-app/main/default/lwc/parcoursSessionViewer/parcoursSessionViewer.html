@@ -1,0 +1,258 @@
+<template>
+    <lightning-card
+        icon-name="standard:flow"
+        title="Déroulé de la session"
+    >
+        <div class="slds-var-p-horizontal_small">
+            <!-- Erreur -->
+            <template lwc:if={errorMessage}>
+                <div
+                    class="slds-text-color_error slds-var-p-around_small"
+                    role="alert"
+                >
+                    {errorMessage}
+                </div>
+            </template>
+
+            <!-- Aucun déroulé -->
+            <template lwc:if={showEmpty}>
+                <div class="slds-text-color_weak slds-var-p-around_small">
+                    Aucune étape enregistrée pour cette session.
+                </div>
+            </template>
+
+            <template lwc:if={hasNodes}>
+                <!-- Résumé de la session -->
+                <dl class="slds-list_horizontal slds-wrap session-summary">
+                    <dt class="slds-item_label slds-text-color_weak">
+                        Parcours
+                    </dt>
+                    <dd class="slds-item_detail">{parcoursName}</dd>
+                    <dt class="slds-item_label slds-text-color_weak">Statut</dt>
+                    <dd class="slds-item_detail">{statut}</dd>
+                    <dt class="slds-item_label slds-text-color_weak">Agent</dt>
+                    <dd class="slds-item_detail">{agentName}</dd>
+                    <dt class="slds-item_label slds-text-color_weak">Début</dt>
+                    <dd class="slds-item_detail">
+                        <lightning-formatted-date-time
+                            value={dateDebut}
+                            year="numeric"
+                            month="2-digit"
+                            day="2-digit"
+                            hour="2-digit"
+                            minute="2-digit"
+                        ></lightning-formatted-date-time>
+                    </dd>
+                    <template lwc:if={dateFin}>
+                        <dt class="slds-item_label slds-text-color_weak">
+                            Fin
+                        </dt>
+                        <dd class="slds-item_detail">
+                            <lightning-formatted-date-time
+                                value={dateFin}
+                                year="numeric"
+                                month="2-digit"
+                                day="2-digit"
+                                hour="2-digit"
+                                minute="2-digit"
+                            ></lightning-formatted-date-time>
+                        </dd>
+                    </template>
+                </dl>
+
+                <!-- Barre d'outils : zoom + légende -->
+                <div class="toolbar slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-var-p-vertical_x-small">
+                    <div class="slds-grid slds-grid_vertical-align-center">
+                        <lightning-button-icon
+                            icon-name="utility:zoom_out"
+                            alternative-text="Dézoomer"
+                            title="Dézoomer"
+                            disabled={disableZoomOut}
+                            onclick={handleZoomOut}
+                        ></lightning-button-icon>
+                        <span class="slds-var-p-horizontal_x-small zoom-label">
+                            {zoomPercent}
+                        </span>
+                        <lightning-button-icon
+                            icon-name="utility:zoom_in"
+                            alternative-text="Zoomer"
+                            title="Zoomer"
+                            disabled={disableZoomIn}
+                            onclick={handleZoomIn}
+                        ></lightning-button-icon>
+                    </div>
+                    <div class="legend slds-grid slds-wrap slds-grid_vertical-align-center">
+                        <span class="legend-item">
+                            <span class="legend-swatch node_question"></span>
+                            Question
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-swatch node_navigation"></span>
+                            Navigation
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-swatch node_conseil"></span>
+                            Conseil
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-swatch node_action"></span>
+                            Action
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-swatch node_fin"></span>
+                            Fin
+                        </span>
+                        <span class="legend-item">
+                            <span class="legend-swatch node_current"></span>
+                            Nœud courant
+                        </span>
+                    </div>
+                </div>
+
+                <div class="viewer slds-grid">
+                    <!-- Graphe -->
+                    <div class="graph-scroll">
+                        <svg
+                            width={svgRenderWidth}
+                            height={svgRenderHeight}
+                            viewBox={viewBox}
+                            preserveAspectRatio="xMinYMin meet"
+                            class="graph-svg"
+                        >
+                            <!-- Arêtes -->
+                            <template for:each={edges} for:item="edge">
+                                <g key={edge.id} class="edge">
+                                    <polyline
+                                        points={edge.points}
+                                        class="edge-line"
+                                    ></polyline>
+                                    <polygon
+                                        points={edge.arrowPoints}
+                                        class="edge-arrow"
+                                    ></polygon>
+                                    <template lwc:if={edge.libelle}>
+                                        <text
+                                            x={edge.labelX}
+                                            y={edge.labelY}
+                                            class="edge-label"
+                                            text-anchor="middle"
+                                        >
+                                            {edge.libelle}
+                                        </text>
+                                    </template>
+                                </g>
+                            </template>
+
+                            <!-- Nœuds -->
+                            <template for:each={nodes} for:item="node">
+                                <g
+                                    key={node.id}
+                                    class={node.cssClass}
+                                    data-id={node.id}
+                                    tabindex="0"
+                                    role="button"
+                                    onclick={handleNodeClick}
+                                    onkeydown={handleNodeKey}
+                                >
+                                    <rect
+                                        x={node.x}
+                                        y={node.y}
+                                        width={node.width}
+                                        height={node.height}
+                                        rx="8"
+                                        class="node-rect"
+                                    ></rect>
+                                    <text
+                                        x={node.textX}
+                                        y={node.nameY}
+                                        class="node-name"
+                                        text-anchor="middle"
+                                    >
+                                        {node.name}
+                                    </text>
+                                    <text
+                                        x={node.textX}
+                                        y={node.typeY}
+                                        class="node-type"
+                                        text-anchor="middle"
+                                    >
+                                        {node.subLabel}
+                                    </text>
+                                </g>
+                            </template>
+                        </svg>
+                    </div>
+
+                    <!-- Panneau de détail de l'étape -->
+                    <template lwc:if={hasSelection}>
+                        <div class="panel slds-var-p-around_small">
+                            <template lwc:if={selectedStep}>
+                                <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                                    <h3 class="slds-text-heading_small">
+                                        Étape {selectedStep.ordre}
+                                    </h3>
+                                    <lightning-button-icon
+                                        icon-name="utility:close"
+                                        alternative-text="Fermer"
+                                        title="Fermer"
+                                        variant="bare"
+                                        onclick={handleClosePanel}
+                                    ></lightning-button-icon>
+                                </div>
+
+                                <dl class="slds-var-m-top_small">
+                                    <dt class="slds-text-color_weak">Nœud</dt>
+                                    <dd class="slds-var-m-bottom_x-small">
+                                        {selectedStep.name}
+                                        <template lwc:if={selectedStep.isCurrent}>
+                                            <lightning-badge
+                                                label="Étape courante"
+                                            ></lightning-badge>
+                                        </template>
+                                    </dd>
+                                    <dt class="slds-text-color_weak">Type</dt>
+                                    <dd class="slds-var-m-bottom_x-small">
+                                        {selectedStep.typeNoeud}
+                                    </dd>
+                                    <dt class="slds-text-color_weak">
+                                        Parcours
+                                    </dt>
+                                    <dd class="slds-var-m-bottom_x-small">
+                                        {selectedStep.parcoursNom}
+                                    </dd>
+
+                                    <template lwc:if={selectedStep.hasReponse}>
+                                        <dt class="slds-text-color_weak">
+                                            Réponse choisie
+                                        </dt>
+                                        <dd class="slds-var-m-bottom_x-small">
+                                            {selectedStep.reponse}
+                                        </dd>
+                                    </template>
+
+                                    <template lwc:if={selectedStep.hasValeurs}>
+                                        <dt class="slds-text-color_weak">
+                                            Valeurs saisies
+                                        </dt>
+                                        <dd>
+                                            <ul class="slds-list_dotted">
+                                                <template
+                                                    for:each={selectedStep.valeurs}
+                                                    for:item="valeur"
+                                                >
+                                                    <li key={valeur.key}>
+                                                        {valeur.valeur}
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </dd>
+                                    </template>
+                                </dl>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

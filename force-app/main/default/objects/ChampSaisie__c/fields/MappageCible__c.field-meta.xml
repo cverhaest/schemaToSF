@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>MappageCible__c</fullName>
+    <label>Mappage cible</label>
+    <type>Text</type>
+    <length>255</length>
+    <required>false</required>
+    <description>Optional copy path onto a record: last segment is the field to write, prefix is how to reach the record (root token client or case). Empty means the value is only traced in Réponse saisie.</description>
+    <inlineHelpText>Chemin de recopie (ex. {client}.Phone). Vide = tracé uniquement.</inlineHelpText>
+</CustomField>

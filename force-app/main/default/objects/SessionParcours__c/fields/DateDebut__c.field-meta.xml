@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DateDebut__c</fullName>
+    <label>Date de début</label>
+    <type>DateTime</type>
+    <required>false</required>
+    <description>Timestamp when the session execution started.</description>
+    <inlineHelpText>Horodatage du lancement.</inlineHelpText>
+</CustomField>

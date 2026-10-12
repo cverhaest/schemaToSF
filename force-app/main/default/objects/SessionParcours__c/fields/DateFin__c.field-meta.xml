@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>DateFin__c</fullName>
+    <label>Date de fin</label>
+    <type>DateTime</type>
+    <required>false</required>
+    <description>Timestamp when the session reached its Fin node and closed.</description>
+    <inlineHelpText>Horodatage de clôture.</inlineHelpText>
+</CustomField>

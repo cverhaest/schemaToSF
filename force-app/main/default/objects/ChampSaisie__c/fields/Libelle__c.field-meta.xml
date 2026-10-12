@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Libelle__c</fullName>
+    <label>Libellé</label>
+    <type>Text</type>
+    <length>255</length>
+    <required>false</required>
+    <description>Caption of the captured field as shown to the agent.</description>
+    <inlineHelpText>Intitulé du champ saisi (ex. Téléphone).</inlineHelpText>
+</CustomField>

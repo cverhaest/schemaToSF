@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Statut__c</fullName>
+    <label>Statut</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <description>Lifecycle status of the parcours; only Actif parcours are offered to agents.</description>
+    <inlineHelpText>Seuls les parcours Actif sont proposés aux agents.</inlineHelpText>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Brouillon</fullName>
+                <default>true</default>
+                <label>Brouillon</label>
+            </value>
+            <value>
+                <fullName>Actif</fullName>
+                <default>false</default>
+                <label>Actif</label>
+            </value>
+            <value>
+                <fullName>Archivé</fullName>
+                <default>false</default>
+                <label>Archivé</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

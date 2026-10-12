@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Statut__c</fullName>
+    <label>Statut</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <description>Execution status of the session.</description>
+    <inlineHelpText>État de l'exécution.</inlineHelpText>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>En cours</fullName>
+                <default>true</default>
+                <label>En cours</label>
+            </value>
+            <value>
+                <fullName>Terminé</fullName>
+                <default>false</default>
+                <label>Terminé</label>
+            </value>
+            <value>
+                <fullName>Abandonné</fullName>
+                <default>false</default>
+                <label>Abandonné</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,95 @@
+<template>
+    <lightning-card title="Parcours métier" icon-name="standard:flow">
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <!-- Chargement -->
+            <template lwc:if={isLoading}>
+                <lightning-spinner alternative-text="Chargement" size="small"></lightning-spinner>
+            </template>
+
+            <!-- Erreur -->
+            <template lwc:if={errorMessage}>
+                <div class="slds-text-color_error slds-p-vertical_x-small" role="alert">
+                    {errorMessage}
+                </div>
+            </template>
+
+            <!-- Parcours terminé -->
+            <template lwc:if={isComplete}>
+                <div class="slds-box slds-theme_success slds-m-top_small" role="status">
+                    <lightning-icon
+                        icon-name="utility:success"
+                        alternative-text="Terminé"
+                        size="small"
+                        class="slds-m-right_x-small"
+                    ></lightning-icon>
+                    Parcours terminé.
+                </div>
+            </template>
+
+            <!-- Nœud courant -->
+            <template lwc:if={node}>
+                <h2 class="slds-text-heading_small slds-m-bottom_small">{node.name}</h2>
+
+                <template lwc:if={node.texte}>
+                    <lightning-formatted-rich-text
+                        value={node.texte}
+                        class="slds-m-bottom_small"
+                    ></lightning-formatted-rich-text>
+                </template>
+
+                <!-- Champs de saisie -->
+                <template lwc:if={hasChamps}>
+                    <div class="slds-form slds-m-vertical_small">
+                        <template for:each={node.champs} for:item="champ">
+                            <lightning-input
+                                key={champ.champId}
+                                data-id={champ.champId}
+                                label={champ.libelle}
+                                type={champ.inputType}
+                                onchange={handleInputChange}
+                                class="slds-m-bottom_x-small"
+                            ></lightning-input>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Transitions : embranchement -->
+                <template lwc:if={isBranching}>
+                    <div class="slds-button-group-row slds-m-top_small">
+                        <template for:each={node.transitions} for:item="transition">
+                            <lightning-button
+                                key={transition.transitionId}
+                                data-id={transition.transitionId}
+                                label={transition.libelleReponse}
+                                variant="brand"
+                                onclick={handleTransition}
+                                class="slds-m-right_x-small slds-m-bottom_x-small"
+                            ></lightning-button>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- Transition : nœud linéaire -->
+                <template lwc:if={hasSingleTransition}>
+                    <lightning-button
+                        label="Suivant"
+                        variant="brand"
+                        onclick={handleNext}
+                        class="slds-m-top_small"
+                    ></lightning-button>
+                </template>
+
+                <!-- Aiguillage vers un sous-parcours -->
+                <template lwc:if={isNavigationJump}>
+                    <lightning-button
+                        label={navigationLabel}
+                        variant="brand"
+                        icon-name="utility:forward"
+                        onclick={handleNavigate}
+                        class="slds-m-top_small"
+                    ></lightning-button>
+                </template>
+            </template>
+        </div>
+    </lightning-card>
+</template>

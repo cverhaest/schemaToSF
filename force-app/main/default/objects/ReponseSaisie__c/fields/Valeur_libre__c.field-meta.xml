@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Valeur_libre__c</fullName>
+    <label>Valeur libre</label>
+    <type>Text</type>
+    <length>255</length>
+    <required>false</required>
+    <description>Free value typed in for a captured input field or free-text answer.</description>
+    <inlineHelpText>Valeur saisie (ChampSaisie ou saisie libre).</inlineHelpText>
+</CustomField>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Code__c</fullName>
+    <label>Code</label>
+    <type>Text</type>
+    <length>80</length>
+    <externalId>true</externalId>
+    <unique>true</unique>
+    <required>false</required>
+    <description>Stable technical identifier of the parcours, used for data import and cross-environment mapping. Must be unique.</description>
+    <inlineHelpText>Code technique stable et unique (ex. EP_FUITE_PART).</inlineHelpText>
+</CustomField>

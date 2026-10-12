@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ObjetCible__c</fullName>
+    <label>Objet cible</label>
+    <type>Text</type>
+    <length>80</length>
+    <required>false</required>
+    <description>API name of the single Salesforce object this Action node creates or updates. Several records means several chained Action nodes.</description>
+    <inlineHelpText>Nom d'API de l'objet SF visé (ex. Event, WorkOrder).</inlineHelpText>
+</CustomField>

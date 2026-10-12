@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Session de parcours</label>
+    <pluralLabel>Sessions de parcours</pluralLabel>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+    <enableSearch>true</enableSearch>
+    <enableReports>true</enableReports>
+    <nameField>
+        <label>Numéro de session</label>
+        <type>AutoNumber</type>
+        <displayFormat>SES-{00000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <description>The Session de parcours object is one execution of a parcours. It records the generic origin (Origine Type and Id), optional Account and Case lookups, the Current Node for resume, a parent-session link for inter-parcours navigation, Statut, start and end timestamps and the Agent. Commonly used to track and audit each run.</description>
+</CustomObject>

@@ -1,6 +1,6 @@
 # Parcours métiers — moteur *data-driven* sur Salesforce
 
-> **Statut : conception / spécifications.** Rien n'est déployé. Ce dépôt sert à **partager l'approche** avec l'équipe avant toute mise en œuvre sur Salesforce.
+> **Statut : tranche verticale implémentée (démo).** Le modèle de données, le moteur générique et deux visualiseurs graphiques existent dans [`force-app/`](force-app/) et sont déployés sur un org de démonstration. Ce dépôt documente l'**approche** (dossier [`doc/`](doc/)) **et** porte désormais une **première mise en œuvre**. Voir [§6 État d'implémentation](#6-état-dimplémentation).
 
 ## 1. À quoi sert cette application
 
@@ -88,11 +88,44 @@ Les logigrammes d'origine (schémas sources) sont dans le dossier [`schema/`](sc
 
 ## 5. Suite envisagée
 
-1. **Tranche verticale de validation** : créer les objets, importer le parcours « EP – Fuite », et un **moteur LWC minimal** (Question / Conseil / Fin + persistance des réponses, actions en *placeholder*).
-2. **Activer les actions réelles** via la classe Apex générique (RV → Events, intervention → WorkOrder).
-3. **Industrialiser** : import des autres parcours (pure donnée), navigation inter-parcours, visualiseur Mermaid intégré.
+1. ~~**Tranche verticale de validation** : créer les objets, importer le parcours « EP – Fuite », et un **moteur LWC minimal**.~~ ✅ **Fait** (voir §6).
+2. **Activer les actions réelles** via la classe Apex générique (RV → Events, intervention → WorkOrder) — le handler générique `ParcoursActionHandler` est en place ; reste à câbler les types d'action métier réels.
+3. **Industrialiser** : import des autres parcours (pure donnée), consolidation de la navigation inter-parcours.
 
-> Tout cela reste à l'état de **proposition** : aucune décision de mise en œuvre n'est prise, aucun composant n'est déployé.
+## 6. État d'implémentation
+
+> La tranche verticale est **construite et déployée sur un org de démonstration**. Tout vit dans [`force-app/main/default/`](force-app/main/default/).
+
+### Modèle de données (7 objets custom)
+
+`Parcours__c`, `Noeud__c`, `Transition__c`, `ChampSaisie__c` (définition) ·
+`SessionParcours__c`, `ReponseSaisie__c`, `ActionExecutee__c` (exécution).
+
+### Apex
+
+| Classe | Rôle |
+|---|---|
+| `ParcoursRunnerController` | Contrôleur du moteur : chargement du nœud courant, persistance des réponses, avance (dont saut inter-parcours), clôture. |
+| `ParcoursActionHandler` | Handler **générique** des nœuds Action (DML décrit par la donnée + journalisation `ActionExecutee__c`). |
+| `ParcoursGraphController` | Expose le **graphe statique** d'un parcours (nœuds + transitions) au visualiseur. |
+| `ParcoursSessionViewerController` | Reconstruit le **chemin exécuté** d'une session (nœuds visités, réponse choisie, valeurs saisies) à partir des `ReponseSaisie__c`. |
+| `TestDataFactory` | Fabrique de données de test partagée. |
+
+Chaque contrôleur a sa classe de test (`*Test`).
+
+### Composants LWC
+
+| Composant | Où | Rôle |
+|---|---|---|
+| `parcoursRunner` | Page Account / Case | **Moteur** générique : déroule le parcours à l'écran, pas à pas. |
+| `parcoursGraphViewer` | Page `Parcours__c` | **Visualiseur du parcours** (graphe statique) + administration des nœuds. |
+| `parcoursSessionViewer` | Page `SessionParcours__c` | **Visualiseur d'exécution** : rejoue graphiquement le chemin réellement suivi par une session (nœuds franchis, réponse choisie sur chaque arête, nœud courant surligné, détail d'étape). |
+
+> Les deux visualiseurs partagent la même nature graphique : disposition en couches via **dagre** (ressource statique `dagre`), rendu **SVG** (repli BFS si dagre indisponible), zoom et légende par type de nœud. Le rendu « Mermaid à la demande » envisagé initialement a été remplacé par ce rendu SVG interactif.
+
+### Intégration pages Lightning
+
+La page d'enregistrement **`Session_Record_Page`** (`SessionParcours__c`) comporte un onglet **« Déroulé »** qui héberge `parcoursSessionViewer` ; le `recordId` de la session lui est injecté automatiquement.
 
 ---
 

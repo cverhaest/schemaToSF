@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Noeud_FK__c</fullName>
+    <label>Nœud</label>
+    <type>Lookup</type>
+    <referenceTo>Noeud__c</referenceTo>
+    <relationshipLabel>Réponses saisies</relationshipLabel>
+    <relationshipName>ReponsesSaisies</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Node (question) that was being asked.</description>
+    <inlineHelpText>Nœud (question) posé.</inlineHelpText>
+</CustomField>

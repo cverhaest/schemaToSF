@@ -1,0 +1,8 @@
+:host {
+    display: block;
+}
+
+.slds-button-group-row {
+    display: flex;
+    flex-wrap: wrap;
+}

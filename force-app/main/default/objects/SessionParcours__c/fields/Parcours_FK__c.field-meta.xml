@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Parcours_FK__c</fullName>
+    <label>Parcours</label>
+    <type>Lookup</type>
+    <referenceTo>Parcours__c</referenceTo>
+    <relationshipLabel>Sessions</relationshipLabel>
+    <relationshipName>Sessions</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Parcours being executed in this session.</description>
+    <inlineHelpText>Parcours déroulé dans cette session.</inlineHelpText>
+</CustomField>

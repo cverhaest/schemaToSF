@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Transition_FK__c</fullName>
+    <label>Transition</label>
+    <type>Lookup</type>
+    <referenceTo>Transition__c</referenceTo>
+    <relationshipLabel>Réponses saisies</relationshipLabel>
+    <relationshipName>ReponsesSaisies</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Transition chosen for a multiple-choice question.</description>
+    <inlineHelpText>Réponse choisie (question à choix).</inlineHelpText>
+</CustomField>

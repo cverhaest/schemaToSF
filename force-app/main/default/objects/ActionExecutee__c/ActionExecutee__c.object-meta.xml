@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Action exécutée</label>
+    <pluralLabel>Actions exécutées</pluralLabel>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ControlledByParent</sharingModel>
+    <visibility>Public</visibility>
+    <nameField>
+        <label>Numéro d'action</label>
+        <type>AutoNumber</type>
+        <displayFormat>ACT-{00000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <description>The Action exécutée object is the log of DML actions run by the generic handler, as a child of Session de parcours. It records the Action node, the DML verb played, the target record Id (used for idempotence), a Statut and a Message. Commonly used to audit creations, updates and deletions.</description>
+</CustomObject>

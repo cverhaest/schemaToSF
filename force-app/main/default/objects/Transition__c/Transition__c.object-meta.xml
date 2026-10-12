@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Transition</label>
+    <pluralLabel>Transitions</pluralLabel>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+    <nameField>
+        <label>Numéro de transition</label>
+        <type>AutoNumber</type>
+        <displayFormat>TR-{00000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <description>The Transition object is one possible answer, an arrow of the flowchart. It links a Source Node to a Target Node under an answer label, with an Ordre that only sorts the choices on screen. Several transitions can point to the same target, which is how fan-in factorisation is stored as data.</description>
+</CustomObject>

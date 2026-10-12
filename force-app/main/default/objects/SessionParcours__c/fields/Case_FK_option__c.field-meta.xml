@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Case_FK_option__c</fullName>
+    <label>Requête (option)</label>
+    <type>Lookup</type>
+    <referenceTo>Case</referenceTo>
+    <relationshipLabel>Sessions de parcours</relationshipLabel>
+    <relationshipName>SessionsParcours</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Convenience lookup to the Case, derived from the origin, for native reporting.</description>
+    <inlineHelpText>Lookup de confort vers la requête (reporting natif).</inlineHelpText>
+</CustomField>

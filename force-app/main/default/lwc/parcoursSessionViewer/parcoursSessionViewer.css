@@ -1,0 +1,160 @@
+:host {
+    --node-question: #2e844a;
+    --node-navigation: #0176d3;
+    --node-conseil: #9050e9;
+    --node-action: #ba0517;
+    --node-fin: #747474;
+    --node-current: #fe9339;
+    --edge-color: #c9c9c9;
+    --edge-label: #514f4d;
+}
+
+.session-summary {
+    gap: 0 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.toolbar {
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.zoom-label {
+    font-size: 0.8rem;
+    color: #514f4d;
+    min-width: 3rem;
+    text-align: center;
+}
+
+.legend {
+    gap: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    color: #514f4d;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.legend-swatch {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 2px;
+}
+
+.legend-swatch.node_question {
+    background: var(--node-question);
+}
+.legend-swatch.node_navigation {
+    background: var(--node-navigation);
+}
+.legend-swatch.node_conseil {
+    background: var(--node-conseil);
+}
+.legend-swatch.node_action {
+    background: var(--node-action);
+}
+.legend-swatch.node_fin {
+    background: var(--node-fin);
+}
+.legend-swatch.node_current {
+    background: var(--node-current);
+}
+
+.viewer {
+    align-items: stretch;
+}
+
+.graph-scroll {
+    flex: 1 1 auto;
+    overflow: auto;
+    max-height: 640px;
+    border: 1px solid #e5e5e5;
+    background: #fafaf9;
+}
+
+.graph-svg {
+    display: block;
+}
+
+/* Arêtes */
+.edge-line {
+    fill: none;
+    stroke: var(--edge-color);
+    stroke-width: 1.5;
+}
+
+.edge-arrow {
+    fill: var(--edge-color);
+}
+
+.edge-label {
+    fill: var(--edge-label);
+    font-size: 11px;
+}
+
+/* Nœuds */
+.node {
+    cursor: pointer;
+}
+
+.node:focus {
+    outline: none;
+}
+
+.node-rect {
+    fill: #ffffff;
+    stroke: var(--node-fin);
+    stroke-width: 2;
+    transition: filter 0.1s ease-in-out;
+}
+
+.node:focus .node-rect,
+.node:hover .node-rect {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.25));
+}
+
+.node-name {
+    font-size: 13px;
+    font-weight: 600;
+    fill: #080707;
+}
+
+.node-type {
+    font-size: 11px;
+    fill: #514f4d;
+}
+
+.node_question .node-rect {
+    stroke: var(--node-question);
+}
+.node_navigation .node-rect {
+    stroke: var(--node-navigation);
+}
+.node_conseil .node-rect {
+    stroke: var(--node-conseil);
+}
+.node_action .node-rect {
+    stroke: var(--node-action);
+}
+.node_fin .node-rect {
+    stroke: var(--node-fin);
+}
+
+/* Nœud courant : contour accentué + fond doux */
+.node_current .node-rect {
+    stroke: var(--node-current);
+    stroke-width: 3;
+    fill: #fff6ec;
+}
+
+.panel {
+    flex: 0 0 280px;
+    border: 1px solid #e5e5e5;
+    border-left: none;
+    background: #ffffff;
+    max-height: 640px;
+    overflow: auto;
+}

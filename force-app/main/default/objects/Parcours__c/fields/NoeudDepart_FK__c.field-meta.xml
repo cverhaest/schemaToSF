@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>NoeudDepart_FK__c</fullName>
+    <label>Nœud de départ</label>
+    <type>Lookup</type>
+    <referenceTo>Noeud__c</referenceTo>
+    <relationshipLabel>Parcours (nœud de départ)</relationshipLabel>
+    <relationshipName>ParcoursDepart</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>First node executed when the engine launches this parcours.</description>
+    <inlineHelpText>Premier nœud exécuté au lancement du parcours (ex. écran d'identification).</inlineHelpText>
+</CustomField>

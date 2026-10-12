@@ -1,6 +1,6 @@
 # Approche **data-driven** : 1 moteur + les parcours en données
 
-> ℹ️ Document de **conception / aide à la décision** (présales). **Rien n'est déployé.**
+> ℹ️ Document de **conception** (présales). Une **tranche verticale est désormais implémentée et déployée** sur un org de démonstration (modèle de données, moteur `parcoursRunner`, handler d'action générique, deux visualiseurs graphiques) — voir le [README §6](../README.md#6-état-dimplémentation) pour l'inventaire. Les choix décrits ci-dessous restent la référence d'architecture.
 > Deux familles d'objets : **Définition** (le parcours tel qu'il est écrit) et **Exécution** (ce qui se passe quand un agent le déroule depuis un Account/Case).
 
 ## 1. Le changement de paradigme
@@ -321,17 +321,24 @@ flowchart LR
 
 > ⚠️ **Vigilance :** création au **bon moment** (confirmation agent) ; **idempotence** via `ActionExecutee__c` (ne pas recréer si l'agent revient en arrière) ; gestion d'erreur (échec → message, parcours non bloqué).
 
-## 10. Visualisation : aller-retour diagramme ⇄ records
+## 10. Visualisation : deux viewers graphiques (implémentés)
+
+> ✅ **Implémenté.** La visualisation initialement envisagée (génération Apex → Mermaid) a été remplacée par **deux composants LWC** au rendu **SVG interactif**, qui lisent directement les records. Disposition en couches via la ressource statique **dagre** (repli BFS si indisponible), zoom et légende colorée par type de nœud. Même nature graphique pour les deux.
 
 ```mermaid
 flowchart LR
-  LOGI["Logigramme / Mermaid<br/>(tes fichiers d'interprétation)"]:::question -->|"import"| REC[("Records :<br/>Parcours / Noeud / Transition")]:::data
-  REC -->|"génération (Apex → Mermaid)"| VIZ["Diagramme rendu dans un LWC<br/>(bouton « Visualiser ce parcours »)"]:::navigation
+  REC[("Records :<br/>Parcours / Noeud / Transition")]:::data -->|"ParcoursGraphController"| VGP["parcoursGraphViewer<br/>(page Parcours__c)<br/>graphe STATIQUE du parcours<br/>+ admin des nœuds"]:::navigation
+  EXE[("Records :<br/>SessionParcours / ReponseSaisie")]:::data -->|"ParcoursSessionViewerController"| VSE["parcoursSessionViewer<br/>(page SessionParcours__c · onglet « Déroulé »)<br/>chemin EXÉCUTÉ : nœuds franchis,<br/>réponse choisie par arête, nœud courant"]:::action
 
-  classDef question fill:#E2E8D5,stroke:#333,color:#000;
   classDef data fill:#D6E8FF,stroke:#0176d3,color:#000;
   classDef navigation fill:#C9C2DE,stroke:#333,color:#000;
+  classDef action fill:#9EFF4D,stroke:#333,color:#000;
 ```
+
+| Viewer | Source lue | Ce qu'il montre |
+| --- | --- | --- |
+| **`parcoursGraphViewer`** (page `Parcours__c`) | `Noeud__c` + `Transition__c` du parcours | Le **graphe statique** complet du parcours (toutes les branches possibles), avec administration inline des nœuds. |
+| **`parcoursSessionViewer`** (page `SessionParcours__c`, onglet **« Déroulé »**) | `ReponseSaisie__c` triées par `Horodatage__c` + `NoeudCourant_FK__c` | Le **chemin réellement suivi** par une exécution : nœuds franchis dans l'ordre, **réponse choisie** portée par chaque arête, **valeurs saisies** dans un panneau de détail, **nœud courant** surligné. Les arêtes reliant les nœuds consécutifs du chemin, un saut vers un sous-parcours apparaît naturellement. |
 
 ## 11. Trajectoire de migration (incrémentale, sans risque)
 

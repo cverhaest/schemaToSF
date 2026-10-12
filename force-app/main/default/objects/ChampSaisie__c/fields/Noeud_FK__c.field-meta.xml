@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Noeud_FK__c</fullName>
+    <label>Nœud</label>
+    <type>Lookup</type>
+    <referenceTo>Noeud__c</referenceTo>
+    <relationshipLabel>Champs de saisie</relationshipLabel>
+    <relationshipName>ChampsSaisie</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Question-type node (screen) that carries this input field.</description>
+    <inlineHelpText>Écran (nœud Question) qui porte ce champ.</inlineHelpText>
+</CustomField>

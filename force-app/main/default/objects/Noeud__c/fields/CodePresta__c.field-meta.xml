@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>CodePresta__c</fullName>
+    <label>Code prestation</label>
+    <type>Text</type>
+    <length>50</length>
+    <required>false</required>
+    <description>Business service code (intervention type) kept as a reportable label and referenced from the mapping JSON via the noeud.CodePresta token.</description>
+    <inlineHelpText>Code de prestation métier (ex. CET05, BEC03). Référencé par {noeud.CodePresta}.</inlineHelpText>
+</CustomField>

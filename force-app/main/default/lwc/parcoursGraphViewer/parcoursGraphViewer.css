@@ -1,0 +1,182 @@
+:host {
+    /* Palette sémantique par type de nœud (surcouche data-viz). */
+    --couleur-question: #0b5cab;
+    --couleur-navigation: #3a7d44;
+    --couleur-conseil: #8a6d3b;
+    --couleur-action: #6b4fbb;
+    --couleur-fin: #5a6b7b;
+    --couleur-defaut: #747474;
+}
+
+/* Disposition : graphe (colonne extensible) + panneau d'admin (largeur fixe).
+   Passe en pile sur les régions étroites. */
+.layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.graph-col {
+    flex: 1 1 420px;
+    min-width: 0;
+}
+
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.zoom {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.zoom-value {
+    min-width: 3rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--slds-g-color-neutral-base-30, #444);
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    list-style: none;
+    margin: 0;
+}
+
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--slds-g-color-neutral-base-30, #444);
+}
+
+.swatch {
+    display: inline-block;
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 0.2rem;
+}
+
+.swatch.node_question {
+    background: var(--couleur-question);
+}
+.swatch.node_navigation {
+    background: var(--couleur-navigation);
+}
+.swatch.node_conseil {
+    background: var(--couleur-conseil);
+}
+.swatch.node_action {
+    background: var(--couleur-action);
+}
+.swatch.node_fin {
+    background: var(--couleur-fin);
+}
+
+.graph-scroll {
+    width: 100%;
+    overflow: auto;
+    border: 1px solid var(--slds-g-color-border-base-1, #e5e5e5);
+    border-radius: 0.25rem;
+    background: var(--slds-g-color-neutral-base-100, #fff);
+}
+
+.graph-svg {
+    display: block;
+}
+
+/* Arêtes */
+.edge-line {
+    fill: none;
+    stroke: var(--couleur-defaut);
+    stroke-width: 1.5;
+}
+
+.edge-arrow {
+    fill: var(--couleur-defaut);
+}
+
+.edge-label {
+    font-size: 11px;
+    fill: var(--slds-g-color-neutral-base-30, #444);
+}
+
+/* Nœuds */
+.node {
+    cursor: pointer;
+}
+
+.node-rect {
+    fill: var(--couleur-defaut);
+    stroke: rgba(0, 0, 0, 0.15);
+    stroke-width: 1;
+}
+
+.node_question .node-rect {
+    fill: var(--couleur-question);
+}
+.node_navigation .node-rect {
+    fill: var(--couleur-navigation);
+}
+.node_conseil .node-rect {
+    fill: var(--couleur-conseil);
+}
+.node_action .node-rect {
+    fill: var(--couleur-action);
+}
+.node_fin .node-rect {
+    fill: var(--couleur-fin);
+}
+
+/* Nœud de départ : liseré accentué. */
+.node_start .node-rect {
+    stroke: #ffb75d;
+    stroke-width: 3;
+}
+
+.node:focus {
+    outline: none;
+}
+
+.node:focus .node-rect {
+    stroke: #1b96ff;
+    stroke-width: 3;
+}
+
+.node-name {
+    fill: #fff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.node-sub {
+    fill: rgba(255, 255, 255, 0.85);
+    font-size: 11px;
+}
+
+/* Panneau d'administration à droite du graphe. */
+.panel {
+    flex: 0 0 360px;
+    max-width: 100%;
+    border: 1px solid var(--slds-g-color-border-base-1, #e5e5e5);
+    border-radius: 0.25rem;
+    background: var(--slds-g-color-neutral-base-100, #fff);
+}
+
+.panel-header {
+    border-bottom: 1px solid var(--slds-g-color-border-base-1, #e5e5e5);
+    background: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+
+.response-row {
+    background: var(--slds-g-color-neutral-base-100, #fff);
+}

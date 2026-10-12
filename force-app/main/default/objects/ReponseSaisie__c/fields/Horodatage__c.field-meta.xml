@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Horodatage__c</fullName>
+    <label>Horodatage</label>
+    <type>DateTime</type>
+    <required>false</required>
+    <description>When the answer was given.</description>
+    <inlineHelpText>Quand la réponse a été donnée.</inlineHelpText>
+</CustomField>

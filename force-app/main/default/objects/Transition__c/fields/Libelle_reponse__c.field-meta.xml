@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Libelle_reponse__c</fullName>
+    <label>Libellé de la réponse</label>
+    <type>Text</type>
+    <length>255</length>
+    <required>false</required>
+    <description>Text of the choice offered to the agent (the radio-button option).</description>
+    <inlineHelpText>Texte du choix proposé à l'agent.</inlineHelpText>
+</CustomField>

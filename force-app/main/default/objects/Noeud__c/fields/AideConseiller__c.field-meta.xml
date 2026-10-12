@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>AideConseiller__c</fullName>
+    <label>Aide conseiller</label>
+    <type>LongTextArea</type>
+    <length>32768</length>
+    <visibleLines>3</visibleLines>
+    <required>false</required>
+    <description>Internal guidance shown to the agent on this node (not read to the client): what to check, how to decide, which answer to pick. Distinct from Texte, which is the client-facing content.</description>
+    <inlineHelpText>Consigne interne au conseiller (non lue au client) : quoi vérifier, comment choisir la réponse.</inlineHelpText>
+</CustomField>

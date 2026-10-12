@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>NoeudSource_FK__c</fullName>
+    <label>Nœud source</label>
+    <type>Lookup</type>
+    <referenceTo>Noeud__c</referenceTo>
+    <relationshipLabel>Transitions sortantes</relationshipLabel>
+    <relationshipName>TransitionsSortantes</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Node this answer leaves from.</description>
+    <inlineHelpText>Nœud d'où part la réponse.</inlineHelpText>
+</CustomField>

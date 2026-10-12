@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>MappageChamps_JSON__c</fullName>
+    <label>Mappage des champs (JSON)</label>
+    <type>LongTextArea</type>
+    <length>32768</length>
+    <visibleLines>10</visibleLines>
+    <required>false</required>
+    <description>Field-to-value pairs for the Action node: fixed values or tokens (client, case, TODAY+N, noeud.CodePresta, merged answers) resolved at runtime by the generic handler.</description>
+    <inlineHelpText>Couples champ → valeur (JSON). Jetons résolus à l'exécution.</inlineHelpText>
+</CustomField>

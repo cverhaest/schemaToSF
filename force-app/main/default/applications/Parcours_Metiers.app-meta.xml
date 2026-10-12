@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Parcours Métiers</label>
+    <description>Administration et consultation des parcours métiers data-driven : définition (Parcours, Nœuds, Transitions, Champs de saisie) et exécution (Sessions, Réponses, Actions exécutées).</description>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <content>Parcours_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Parcours__c</pageOrSobjectType>
+        <type>Flexipage</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <content>Noeud_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Noeud__c</pageOrSobjectType>
+        <type>Flexipage</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <content>Transition_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>Transition__c</pageOrSobjectType>
+        <type>Flexipage</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <content>Session_Record_Page</content>
+        <formFactor>Large</formFactor>
+        <pageOrSobjectType>SessionParcours__c</pageOrSobjectType>
+        <type>Flexipage</type>
+    </actionOverrides>
+    <uiType>Lightning</uiType>
+    <navType>Standard</navType>
+    <formFactors>Large</formFactors>
+    <brand>
+        <headerColor>#0B5CAB</headerColor>
+        <shouldOverrideOrgTheme>false</shouldOverrideOrgTheme>
+    </brand>
+    <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
+    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <isNavTabPersistenceDisabled>false</isNavTabPersistenceDisabled>
+    <tabs>standard-home</tabs>
+    <tabs>Parcours__c</tabs>
+    <tabs>Noeud__c</tabs>
+    <tabs>Transition__c</tabs>
+    <tabs>ChampSaisie__c</tabs>
+    <tabs>SessionParcours__c</tabs>
+    <tabs>ReponseSaisie__c</tabs>
+    <tabs>ActionExecutee__c</tabs>
+    <tabs>standard-Account</tabs>
+    <tabs>standard-Case</tabs>
+</CustomApplication>

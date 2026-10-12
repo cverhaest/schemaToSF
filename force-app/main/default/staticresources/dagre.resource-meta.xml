@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
+    <cacheControl>Public</cacheControl>
+    <contentType>text/javascript</contentType>
+    <description>dagre 0.8.5 (UMD) : moteur de calcul de layout de graphe en couches (Sugiyama) utilisé par le LWC parcoursGraphViewer pour positionner nœuds et arêtes en minimisant les croisements. Librairie de calcul uniquement (aucune manipulation du DOM).</description>
+</StaticResource>

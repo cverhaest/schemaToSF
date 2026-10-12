@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>TypeAction__c</fullName>
+    <label>Type d'action</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <description>DML verb for an Action node: tells the generic handler what to do on the Target Object (Créer=insert, Mettre à jour=update, Supprimer=delete, Upsert).</description>
+    <inlineHelpText>Verbe DML joué par le handler générique (si Type = Action).</inlineHelpText>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Créer</fullName>
+                <default>false</default>
+                <label>Créer</label>
+            </value>
+            <value>
+                <fullName>Mettre à jour</fullName>
+                <default>false</default>
+                <label>Mettre à jour</label>
+            </value>
+            <value>
+                <fullName>Supprimer</fullName>
+                <default>false</default>
+                <label>Supprimer</label>
+            </value>
+            <value>
+                <fullName>Upsert</fullName>
+                <default>false</default>
+                <label>Upsert</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,226 @@
+<template>
+    <lightning-card title="Visualisation du parcours" icon-name="standard:flow">
+        <div class="slds-p-horizontal_small slds-p-bottom_small">
+            <template lwc:if={errorMessage}>
+                <div class="slds-text-color_error slds-p-around_small" role="alert">
+                    {errorMessage}
+                </div>
+            </template>
+
+            <template lwc:if={hasNodes}>
+                <div class="layout">
+                    <!-- ============ Colonne graphe ============ -->
+                    <div class="graph-col">
+                        <div class="toolbar slds-m-bottom_x-small">
+                            <ul class="legend">
+                                <li class="legend-item"><span class="swatch node_question"></span>Question</li>
+                                <li class="legend-item"><span class="swatch node_navigation"></span>Navigation</li>
+                                <li class="legend-item"><span class="swatch node_conseil"></span>Conseil</li>
+                                <li class="legend-item"><span class="swatch node_action"></span>Action</li>
+                                <li class="legend-item"><span class="swatch node_fin"></span>Fin</li>
+                            </ul>
+                            <div class="zoom">
+                                <lightning-button-icon
+                                    icon-name="utility:zoomout"
+                                    alternative-text="Dézoomer"
+                                    title="Dézoomer"
+                                    disabled={disableZoomOut}
+                                    onclick={handleZoomOut}
+                                ></lightning-button-icon>
+                                <span class="zoom-value">{zoomPercent}</span>
+                                <lightning-button-icon
+                                    icon-name="utility:zoomin"
+                                    alternative-text="Zoomer"
+                                    title="Zoomer"
+                                    disabled={disableZoomIn}
+                                    onclick={handleZoomIn}
+                                ></lightning-button-icon>
+                            </div>
+                        </div>
+
+                        <div class="graph-scroll">
+                            <svg
+                                class="graph-svg"
+                                width={svgRenderWidth}
+                                height={svgRenderHeight}
+                                viewBox={viewBox}
+                            >
+                                <template for:each={edges} for:item="edge">
+                                    <g key={edge.id}>
+                                        <polyline
+                                            points={edge.points}
+                                            class="edge-line"
+                                        ></polyline>
+                                        <polygon points={edge.arrowPoints} class="edge-arrow"></polygon>
+                                        <template lwc:if={edge.libelle}>
+                                            <text
+                                                x={edge.labelX}
+                                                y={edge.labelY}
+                                                class="edge-label"
+                                                text-anchor="middle"
+                                            >{edge.libelle}</text>
+                                        </template>
+                                    </g>
+                                </template>
+
+                                <template for:each={nodes} for:item="node">
+                                    <g
+                                        key={node.id}
+                                        class={node.cssClass}
+                                        data-id={node.id}
+                                        onclick={handleNodeClick}
+                                        onkeydown={handleNodeKey}
+                                        tabindex="0"
+                                        role="button"
+                                        aria-label={node.name}
+                                    >
+                                        <rect
+                                            x={node.x}
+                                            y={node.y}
+                                            width={node.width}
+                                            height={node.height}
+                                            rx="8"
+                                            class="node-rect"
+                                        ></rect>
+                                        <text
+                                            x={node.textX}
+                                            y={node.nameY}
+                                            class="node-name"
+                                            text-anchor="middle"
+                                        >{node.name}</text>
+                                        <text
+                                            x={node.textX}
+                                            y={node.typeY}
+                                            class="node-sub"
+                                            text-anchor="middle"
+                                        >{node.subLabel}</text>
+                                    </g>
+                                </template>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- ============ Colonne panneau d'administration ============ -->
+                    <template lwc:if={hasSelection}>
+                        <section class="panel" aria-label="Administration du nœud">
+                            <div class="slds-grid slds-grid_align-spread slds-p-around_small panel-header">
+                                <h2 class="slds-text-heading_small slds-truncate" title={selectedNodeName}>
+                                    {selectedNodeName}
+                                </h2>
+                                <lightning-button-icon
+                                    icon-name="utility:close"
+                                    alternative-text="Fermer le panneau"
+                                    title="Fermer"
+                                    variant="bare"
+                                    onclick={handleClosePanel}
+                                ></lightning-button-icon>
+                            </div>
+
+                            <div class="slds-p-horizontal_small">
+                                <lightning-button
+                                    label="Définir comme départ"
+                                    icon-name="utility:anchor"
+                                    disabled={isStartSelected}
+                                    onclick={handleSetStart}
+                                    class="slds-m-bottom_small"
+                                ></lightning-button>
+
+                                <!-- Édition du nœud via LDS -->
+                                <lightning-record-edit-form
+                                    object-api-name="Noeud__c"
+                                    record-id={selectedNodeId}
+                                    onsuccess={handleNodeSaveSuccess}
+                                    onerror={handleNodeSaveError}
+                                >
+                                    <lightning-messages></lightning-messages>
+                                    <lightning-input-field field-name="Name"></lightning-input-field>
+                                    <lightning-input-field field-name="TypeNoeud__c"></lightning-input-field>
+                                    <lightning-input-field field-name="Texte__c"></lightning-input-field>
+                                    <lightning-input-field field-name="AideConseiller__c"></lightning-input-field>
+                                    <lightning-input-field field-name="TypeAction__c"></lightning-input-field>
+                                    <lightning-input-field field-name="ObjetCible__c"></lightning-input-field>
+                                    <lightning-input-field field-name="CodePresta__c"></lightning-input-field>
+                                    <lightning-input-field field-name="MappageChamps_JSON__c"></lightning-input-field>
+                                    <lightning-input-field field-name="ParcoursCible_FK__c"></lightning-input-field>
+                                    <div class="slds-grid slds-grid_align-end slds-m-top_small">
+                                        <lightning-button
+                                            label="Annuler"
+                                            onclick={handleClosePanel}
+                                            class="slds-m-right_x-small"
+                                        ></lightning-button>
+                                        <lightning-button
+                                            variant="brand"
+                                            type="submit"
+                                            label="Enregistrer le nœud"
+                                        ></lightning-button>
+                                    </div>
+                                </lightning-record-edit-form>
+
+                                <!-- Réponses et destinations (Transition__c) -->
+                                <div class="slds-m-top_medium responses">
+                                    <h3 class="slds-text-title_caps slds-m-bottom_x-small">
+                                        Réponses et destinations
+                                    </h3>
+                                    <template lwc:if={responseRows.length}>
+                                        <template for:each={responseRows} for:item="row">
+                                            <div key={row.key} class="response-row slds-box slds-box_x-small slds-m-bottom_x-small">
+                                                <lightning-input
+                                                    label="Réponse"
+                                                    value={row.libelle}
+                                                    data-key={row.key}
+                                                    onchange={handleResponseLibelle}
+                                                ></lightning-input>
+                                                <lightning-combobox
+                                                    label="Destination"
+                                                    placeholder="Choisir un nœud"
+                                                    options={nodeOptions}
+                                                    value={row.targetId}
+                                                    data-key={row.key}
+                                                    onchange={handleResponseTarget}
+                                                ></lightning-combobox>
+                                                <div class="slds-grid slds-grid_align-end slds-m-top_xxx-small">
+                                                    <lightning-button-icon
+                                                        icon-name="utility:delete"
+                                                        alternative-text="Supprimer la réponse"
+                                                        title="Supprimer"
+                                                        variant="border-filled"
+                                                        data-key={row.key}
+                                                        onclick={handleDeleteResponse}
+                                                    ></lightning-button-icon>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template lwc:else>
+                                        <p class="slds-text-color_weak slds-m-bottom_x-small">
+                                            Aucune réponse pour ce nœud.
+                                        </p>
+                                    </template>
+
+                                    <div class="slds-grid slds-grid_align-spread slds-m-top_x-small slds-m-bottom_small">
+                                        <lightning-button
+                                            label="Ajouter une réponse"
+                                            icon-name="utility:add"
+                                            onclick={handleAddResponse}
+                                        ></lightning-button>
+                                        <lightning-button
+                                            variant="brand"
+                                            label="Enregistrer les réponses"
+                                            onclick={handleSaveResponses}
+                                        ></lightning-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </template>
+                </div>
+            </template>
+
+            <template lwc:if={showEmpty}>
+                <div class="slds-text-color_weak slds-p-around_small">
+                    Ce parcours ne contient encore aucun nœud.
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

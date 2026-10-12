@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Ordre__c</fullName>
+    <label>Ordre</label>
+    <type>Number</type>
+    <precision>4</precision>
+    <scale>0</scale>
+    <required>false</required>
+    <description>Display order of this field within the screen.</description>
+    <inlineHelpText>Ordre d'affichage dans l'écran.</inlineHelpText>
+</CustomField>

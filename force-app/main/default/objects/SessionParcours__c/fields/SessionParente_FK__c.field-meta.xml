@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>SessionParente_FK__c</fullName>
+    <label>Session parente</label>
+    <type>Lookup</type>
+    <referenceTo>SessionParcours__c</referenceTo>
+    <relationshipLabel>Sous-sessions</relationshipLabel>
+    <relationshipName>SousSessions</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Calling session when this one was opened by a Navigation node of another parcours, for full-journey audit.</description>
+    <inlineHelpText>Session appelante (navigation inter-parcours).</inlineHelpText>
+</CustomField>

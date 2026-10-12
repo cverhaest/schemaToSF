@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>ParcoursCible_FK__c</fullName>
+    <label>Parcours cible</label>
+    <type>Lookup</type>
+    <referenceTo>Parcours__c</referenceTo>
+    <relationshipLabel>Nœuds de navigation</relationshipLabel>
+    <relationshipName>NoeudsNavigation</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>For a Navigation node, the other parcours to hand control to; the engine jumps to that parcours' starting node.</description>
+    <inlineHelpText>Parcours vers lequel débrancher (si Type = Navigation).</inlineHelpText>
+</CustomField>

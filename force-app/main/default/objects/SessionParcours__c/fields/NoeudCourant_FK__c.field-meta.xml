@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>NoeudCourant_FK__c</fullName>
+    <label>Nœud courant</label>
+    <type>Lookup</type>
+    <referenceTo>Noeud__c</referenceTo>
+    <relationshipLabel>Sessions en cours</relationshipLabel>
+    <relationshipName>SessionsEnCours</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Node where the agent currently stands, enabling resume of an in-progress session.</description>
+    <inlineHelpText>Nœud où en est l'agent (permet la reprise).</inlineHelpText>
+</CustomField>

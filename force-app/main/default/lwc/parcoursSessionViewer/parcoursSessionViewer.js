@@ -1,0 +1,462 @@
+import { LightningElement, api, wire } from 'lwc';
+import { loadScript } from 'lightning/platformResourceLoader';
+import DAGRE from '@salesforce/resourceUrl/dagre';
+import getSessionPath from '@salesforce/apex/ParcoursSessionViewerController.getSessionPath';
+
+const NODE_WIDTH = 180;
+const NODE_HEIGHT = 64;
+const H_GAP = 90; // écart horizontal entre deux niveaux
+const V_GAP = 28; // écart vertical entre deux nœuds d'un même niveau
+const MARGIN = 24;
+
+const ZOOM_MIN = 0.4;
+const ZOOM_MAX = 1.6;
+const ZOOM_STEP = 0.2;
+
+// Classe CSS par type de nœud (couleur sémantique, alignée sur le visualiseur
+// de parcours).
+const TYPE_CLASS = {
+    Question: 'node node_question',
+    Navigation: 'node node_navigation',
+    Conseil: 'node node_conseil',
+    Action: 'node node_action',
+    Fin: 'node node_fin'
+};
+
+/**
+ * Visualise le déroulé d'une session de parcours : la suite des nœuds
+ * effectivement franchis, la réponse sélectionnée à chaque embranchement (sur
+ * l'arête sortante) et les valeurs saisies (dans le panneau de détail). Même
+ * nature graphique que parcoursGraphViewer mais en lecture seule et piloté par
+ * une session. Data-driven : tout vient du chemin reconstruit côté Apex.
+ */
+export default class ParcoursSessionViewer extends LightningElement {
+    @api recordId;
+
+    nodes = [];
+    edges = [];
+    svgWidth = 0;
+    svgHeight = 0;
+    zoom = 1;
+    selectedNodeId;
+    errorMessage;
+
+    // En-tête : métadonnées de la session.
+    parcoursName;
+    statut;
+    agentName;
+    dateDebut;
+    dateFin;
+
+    _rawNodes = [];
+    _rawEdges = [];
+    _startNodeId;
+    _pathData;
+    _loaded = false;
+    _dagreRequested = false;
+    _dagreReady = false;
+
+    @wire(getSessionPath, { sessionId: '$recordId' })
+    wiredPath({ data, error }) {
+        if (data) {
+            this._loaded = true;
+            this.errorMessage = undefined;
+            this.parcoursName = data.parcoursName;
+            this.statut = data.statut;
+            this.agentName = data.agentName;
+            this.dateDebut = data.dateDebut;
+            this.dateFin = data.dateFin;
+            this.buildLayout(data);
+            if (this.selectedNodeId) {
+                this.selectNode(this.selectedNodeId);
+            }
+        } else if (error) {
+            this._loaded = true;
+            this.errorMessage = this.reduceError(error);
+            this.nodes = [];
+            this.edges = [];
+        }
+    }
+
+    /**
+     * Charge dagre une seule fois puis recalcule la disposition. En cas d'échec,
+     * la disposition BFS de repli déjà affichée reste en place.
+     */
+    renderedCallback() {
+        if (this._dagreRequested) {
+            return;
+        }
+        this._dagreRequested = true;
+        loadScript(this, DAGRE)
+            .then(() => {
+                this._dagreReady = true;
+                if (this._pathData) {
+                    this.buildLayout(this._pathData);
+                    if (this.selectedNodeId) {
+                        this.selectNode(this.selectedNodeId);
+                    }
+                }
+            })
+            .catch(() => {
+                this._dagreReady = false;
+            });
+    }
+
+    get hasNodes() {
+        return this.nodes.length > 0;
+    }
+
+    get hasSelection() {
+        return Boolean(this.selectedNodeId);
+    }
+
+    get showEmpty() {
+        return this._loaded && !this.errorMessage && this.nodes.length === 0;
+    }
+
+    get viewBox() {
+        return `0 0 ${this.svgWidth} ${this.svgHeight}`;
+    }
+
+    get svgRenderWidth() {
+        return Math.round(this.svgWidth * this.zoom);
+    }
+
+    get svgRenderHeight() {
+        return Math.round(this.svgHeight * this.zoom);
+    }
+
+    get zoomPercent() {
+        return `${Math.round(this.zoom * 100)} %`;
+    }
+
+    get disableZoomIn() {
+        return this.zoom >= ZOOM_MAX;
+    }
+
+    get disableZoomOut() {
+        return this.zoom <= ZOOM_MIN;
+    }
+
+    // Détail de l'étape sélectionnée pour le panneau latéral (lecture seule).
+    get selectedStep() {
+        if (!this.selectedNodeId) {
+            return undefined;
+        }
+        const step = this._rawNodes.find(
+            (node) => node.id === this.selectedNodeId
+        );
+        if (!step) {
+            return undefined;
+        }
+        const valeurs = (step.valeurs || []).map((valeur, index) => ({
+            key: `${step.id}-v${index}`,
+            valeur
+        }));
+        return {
+            id: step.id,
+            name: step.name,
+            typeNoeud: step.typeNoeud,
+            parcoursNom: step.parcoursNom,
+            reponse: step.reponse,
+            hasReponse: Boolean(step.reponse),
+            valeurs,
+            hasValeurs: valeurs.length > 0,
+            ordre: step.ordre,
+            isCurrent: Boolean(step.isCurrent)
+        };
+    }
+
+    /**
+     * Produit les modèles de vue des nœuds et des arêtes du chemin exécuté. Le
+     * calcul des positions est délégué à dagre dès qu'il est chargé, avec un
+     * repli BFS immédiat tant qu'il ne l'est pas.
+     */
+    buildLayout(path) {
+        this._pathData = path;
+        const rawNodes = path.nodes || [];
+        const rawEdges = path.edges || [];
+        this._rawNodes = rawNodes;
+        this._rawEdges = rawEdges;
+
+        const nodeById = new Map();
+        rawNodes.forEach((node) => nodeById.set(node.id, node));
+
+        const startId =
+            path.startNodeId && nodeById.has(path.startNodeId)
+                ? path.startNodeId
+                : rawNodes.length
+                ? rawNodes[0].id
+                : null;
+        this._startNodeId = startId;
+
+        const layout =
+            this._dagreReady && window.dagre
+                ? this.computeDagreLayout(rawNodes, rawEdges, nodeById)
+                : this.computeBfsLayout(rawNodes, rawEdges, nodeById, startId);
+
+        this.nodes = rawNodes
+            .filter((node) => layout.positionById.has(node.id))
+            .map((node) => {
+                const position = layout.positionById.get(node.id);
+                return {
+                    id: node.id,
+                    name: node.name,
+                    subLabel: this.buildSubLabel(node),
+                    x: position.x,
+                    y: position.y,
+                    textX: position.x + NODE_WIDTH / 2,
+                    nameY: position.y + 26,
+                    typeY: position.y + 46,
+                    width: NODE_WIDTH,
+                    height: NODE_HEIGHT,
+                    cssClass:
+                        (TYPE_CLASS[node.typeNoeud] || 'node') +
+                        (node.isCurrent ? ' node_current' : '')
+                };
+            });
+
+        this.edges = layout.edges;
+        this.svgWidth = layout.width;
+        this.svgHeight = layout.height;
+    }
+
+    /**
+     * Disposition optimisée par dagre : rangs horizontaux (gauche -> droite),
+     * tracés d'arêtes multi-points. Les coordonnées renvoyées sont des centres :
+     * on les ramène au coin supérieur gauche attendu par le rendu SVG.
+     */
+    computeDagreLayout(rawNodes, rawEdges, nodeById) {
+        const g = new window.dagre.graphlib.Graph({ multigraph: true });
+        g.setGraph({
+            rankdir: 'LR',
+            nodesep: V_GAP,
+            ranksep: H_GAP,
+            marginx: MARGIN,
+            marginy: MARGIN
+        });
+        g.setDefaultEdgeLabel(() => ({}));
+
+        rawNodes.forEach((node) =>
+            g.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT })
+        );
+        rawEdges.forEach((edge, index) => {
+            if (nodeById.has(edge.source) && nodeById.has(edge.target)) {
+                g.setEdge(edge.source, edge.target, {}, edge.id || `edge-${index}`);
+            }
+        });
+
+        window.dagre.layout(g);
+
+        const positionById = new Map();
+        rawNodes.forEach((node) => {
+            const n = g.node(node.id);
+            if (n) {
+                positionById.set(node.id, {
+                    x: n.x - NODE_WIDTH / 2,
+                    y: n.y - NODE_HEIGHT / 2
+                });
+            }
+        });
+
+        const edges = rawEdges
+            .filter((edge) => nodeById.has(edge.source) && nodeById.has(edge.target))
+            .map((edge, index) => {
+                const name = edge.id || `edge-${index}`;
+                const e = g.edge(edge.source, edge.target, name);
+                const points = (e && e.points) || [];
+                return this.buildEdge(name, points, edge.libelle);
+            });
+
+        const graphInfo = g.graph();
+        return {
+            positionById,
+            edges,
+            width: Math.ceil(graphInfo.width || MARGIN * 2),
+            height: Math.ceil(graphInfo.height || MARGIN * 2)
+        };
+    }
+
+    /**
+     * Disposition de repli : profondeur de chaque nœud via un parcours en largeur
+     * depuis le départ ; arêtes en segments droits d'un bord à l'autre.
+     */
+    computeBfsLayout(rawNodes, rawEdges, nodeById, startId) {
+        const outgoing = new Map();
+        rawEdges.forEach((edge) => {
+            if (!outgoing.has(edge.source)) {
+                outgoing.set(edge.source, []);
+            }
+            outgoing.get(edge.source).push(edge.target);
+        });
+
+        const depthById = new Map();
+        const queue = [];
+        if (startId) {
+            depthById.set(startId, 0);
+            queue.push(startId);
+        }
+        while (queue.length) {
+            const current = queue.shift();
+            const currentDepth = depthById.get(current);
+            (outgoing.get(current) || []).forEach((target) => {
+                if (nodeById.has(target) && !depthById.has(target)) {
+                    depthById.set(target, currentDepth + 1);
+                    queue.push(target);
+                }
+            });
+        }
+
+        let maxDepth = 0;
+        depthById.forEach((depth) => {
+            if (depth > maxDepth) {
+                maxDepth = depth;
+            }
+        });
+        rawNodes.forEach((node) => {
+            if (!depthById.has(node.id)) {
+                depthById.set(node.id, maxDepth + 1);
+            }
+        });
+
+        const byDepth = new Map();
+        rawNodes.forEach((node) => {
+            const depth = depthById.get(node.id);
+            if (!byDepth.has(depth)) {
+                byDepth.set(depth, []);
+            }
+            byDepth.get(depth).push(node);
+        });
+
+        let maxRows = 0;
+        byDepth.forEach((group) => {
+            if (group.length > maxRows) {
+                maxRows = group.length;
+            }
+        });
+
+        const positionById = new Map();
+        Array.from(byDepth.keys())
+            .sort((a, b) => a - b)
+            .forEach((depth) => {
+                byDepth.get(depth).forEach((node, index) => {
+                    positionById.set(node.id, {
+                        x: MARGIN + depth * (NODE_WIDTH + H_GAP),
+                        y: MARGIN + index * (NODE_HEIGHT + V_GAP)
+                    });
+                });
+            });
+
+        const edges = rawEdges
+            .filter(
+                (edge) =>
+                    positionById.has(edge.source) &&
+                    positionById.has(edge.target)
+            )
+            .map((edge, index) => {
+                const source = positionById.get(edge.source);
+                const target = positionById.get(edge.target);
+                const points = [
+                    { x: source.x + NODE_WIDTH, y: source.y + NODE_HEIGHT / 2 },
+                    { x: target.x, y: target.y + NODE_HEIGHT / 2 }
+                ];
+                return this.buildEdge(edge.id || `edge-${index}`, points, edge.libelle);
+            });
+
+        return {
+            positionById,
+            edges,
+            width: MARGIN * 2 + (maxDepth + 2) * (NODE_WIDTH + H_GAP),
+            height: MARGIN * 2 + Math.max(maxRows, 1) * (NODE_HEIGHT + V_GAP)
+        };
+    }
+
+    /**
+     * Construit le modèle de vue d'une arête à partir d'une polyligne : chaîne
+     * `points` pour le tracé, pointe de flèche orientée selon le dernier segment,
+     * position du libellé (réponse choisie) au milieu du tracé.
+     */
+    buildEdge(id, points, libelle) {
+        const safePoints =
+            points && points.length >= 2
+                ? points
+                : [
+                      { x: 0, y: 0 },
+                      { x: 0, y: 0 }
+                  ];
+        const pointsAttr = safePoints.map((p) => `${p.x},${p.y}`).join(' ');
+
+        const tip = safePoints[safePoints.length - 1];
+        const prev = safePoints[safePoints.length - 2];
+        let dx = tip.x - prev.x;
+        let dy = tip.y - prev.y;
+        const length = Math.hypot(dx, dy) || 1;
+        dx /= length;
+        dy /= length;
+        const back = 9;
+        const half = 5;
+        const baseX = tip.x - dx * back;
+        const baseY = tip.y - dy * back;
+        const perpX = -dy;
+        const perpY = dx;
+        const arrowPoints = `${tip.x},${tip.y} ${baseX + perpX * half},${
+            baseY + perpY * half
+        } ${baseX - perpX * half},${baseY - perpY * half}`;
+
+        const mid = safePoints[Math.floor(safePoints.length / 2)];
+        return {
+            id,
+            points: pointsAttr,
+            arrowPoints,
+            labelX: mid.x,
+            labelY: mid.y - 6,
+            libelle
+        };
+    }
+
+    // Sous-titre du nœud : nom du parcours (met en évidence un saut de parcours)
+    // à défaut le type.
+    buildSubLabel(node) {
+        return node.parcoursNom || node.typeNoeud || '';
+    }
+
+    selectNode(nodeId) {
+        this.selectedNodeId = nodeId;
+    }
+
+    handleNodeClick(event) {
+        this.selectNode(event.currentTarget.dataset.id);
+    }
+
+    handleNodeKey(event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            this.handleNodeClick(event);
+        }
+    }
+
+    handleClosePanel() {
+        this.selectedNodeId = undefined;
+    }
+
+    handleZoomIn() {
+        this.zoom = Math.min(ZOOM_MAX, Math.round((this.zoom + ZOOM_STEP) * 10) / 10);
+    }
+
+    handleZoomOut() {
+        this.zoom = Math.max(ZOOM_MIN, Math.round((this.zoom - ZOOM_STEP) * 10) / 10);
+    }
+
+    reduceError(error) {
+        if (Array.isArray(error.body)) {
+            return error.body.map((item) => item.message).join(', ');
+        }
+        if (error.body && typeof error.body.message === 'string') {
+            return error.body.message;
+        }
+        if (typeof error.message === 'string') {
+            return error.message;
+        }
+        return 'Une erreur est survenue.';
+    }
+}

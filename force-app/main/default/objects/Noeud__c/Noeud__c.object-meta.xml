@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Nœud</label>
+    <pluralLabel>Nœuds</pluralLabel>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+    <enableSearch>true</enableSearch>
+    <enableReports>true</enableReports>
+    <nameField>
+        <label>Clé du nœud</label>
+        <type>Text</type>
+    </nameField>
+    <description>The Nœud object is one step of a parcours and the heart of the model. Its Type (Question, Navigation, Conseil, Action, Fin) tells the engine how to treat it; Action nodes carry a DML verb, Target Object and field-mapping JSON, Navigation nodes a target parcours. Commonly used to author flowchart steps as data.</description>
+</CustomObject>

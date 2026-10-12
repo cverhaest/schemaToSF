@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>NoeudCible_FK__c</fullName>
+    <label>Nœud cible</label>
+    <type>Lookup</type>
+    <referenceTo>Noeud__c</referenceTo>
+    <relationshipLabel>Transitions entrantes</relationshipLabel>
+    <relationshipName>TransitionsEntrantes</relationshipName>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Node reached when this choice is selected. Several transitions may share one target (fan-in).</description>
+    <inlineHelpText>Nœud atteint si ce choix est retenu.</inlineHelpText>
+</CustomField>

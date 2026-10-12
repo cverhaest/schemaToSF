@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Statut__c</fullName>
+    <label>Statut</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <description>Outcome of the DML action.</description>
+    <inlineHelpText>Résultat de l'action.</inlineHelpText>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>OK</fullName>
+                <default>true</default>
+                <label>OK</label>
+            </value>
+            <value>
+                <fullName>Erreur</fullName>
+                <default>false</default>
+                <label>Erreur</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
