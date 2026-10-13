@@ -52,6 +52,18 @@
 
 > **C'est ainsi que sont « générées » les réponses :** une question = ses Transitions sortantes. « Oui/Non » = 2 Transitions ; « Propriété / Rue » = 2 Transitions. Et **plusieurs Transitions peuvent viser le même `NoeudCible`** → c'est la factorisation (fan-in) : ex. N_EACCD(Oui), N_CO(Oui) et N_RVCET48 pointent tous vers N_CET48.
 
+> **⚠️ `Transition__c` ≠ réponse donnée — ne pas confondre définition et exécution.** `Transition__c` sert **uniquement à définir** les réponses *possibles* d'un nœud Question : chaque transition sortante = **une option** proposée (son `Libelle_reponse` + sa cible `NoeudCible_FK`). Ces enregistrements sont **écrits une fois** avec le parcours, **partagés par toutes les exécutions** et **jamais modifiés au déroulé**. La **réponse réellement obtenue** lors d'un appel n'est **pas** stockée dans `Transition__c` : elle est enregistrée dans **`ReponseSaisie__c`** (objet d'exécution, section B), qui **pointe vers la transition choisie** via son lookup `Transition_FK`.
+>
+> | | `Transition__c` (DÉFINITION) | `ReponseSaisie__c` (EXÉCUTION) |
+> |---|---|---|
+> | **Rôle** | les réponses *possibles* d'une Question | la réponse *obtenue* à une étape |
+> | **Écrit** | une fois, à la conception du parcours | à chaque réponse, pendant l'appel |
+> | **Partagé** | par toutes les sessions | propre à **une** session (`Session_FK`) |
+> | **Choix retenu** | — (c'est le catalogue) | `Transition_FK` = la transition choisie |
+> | **Saisie libre** | — | `Valeur_libre` (champ d'un écran de saisie) |
+>
+> **En clair :** `Transition__c` = le *menu* des réponses ; `ReponseSaisie__c` = le *ticket* de ce qui a été effectivement choisi/saisi. Une Question à choix produit une `ReponseSaisie__c` dont `Transition_FK` désigne l'option retenue ; un écran de saisie (`ChampSaisie__c`) produit une `ReponseSaisie__c` dont `Valeur_libre` porte la valeur tapée (sans transition).
+
 ### ChampSaisie__c — un champ d'un écran de saisie
 
 | Champ | Type SF | Description | Exemple (EP – FUITE) |
@@ -116,6 +128,8 @@
 | `Transition_FK` | Lookup → Transition__c | Quelle réponse a été choisie (question à choix). | « Filet d'eau… » |
 | `Valeur_libre` | Text | La valeur saisie (pour un ChampSaisie / saisie libre). | 06 12 34 56 78 |
 | `Horodatage` | DateTime | Quand la réponse a été donnée. | 14:33 |
+
+> **Double nature de `ReponseSaisie__c` (voir l'encadré « Transition ≠ réponse » en section A) :** sur un nœud **Question**, `Transition_FK` est renseigné (la branche choisie, dont on relit le libellé via `Transition__c.Libelle_reponse`) et `Valeur_libre` reste vide ; sur un **écran de saisie** (`ChampSaisie__c`), c'est l'inverse — `Valeur_libre` porte la valeur tapée et `Transition_FK` est vide. C'est cette trace, ordonnée par `Horodatage`, que le visualiseur d'exécution rejoue pour reconstituer le chemin suivi.
 
 ### ActionExecutee__c — journal des actions DML (créations / mises à jour / suppressions)
 
