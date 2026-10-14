@@ -92,7 +92,15 @@
 
 .edge-label {
     fill: var(--edge-label);
+    font-family: 'Salesforce Sans', Arial, sans-serif;
     font-size: 11px;
+}
+
+/* Fond du libellé d'arête : masque le tracé sous le texte. */
+.edge-label-bg {
+    fill: #fafaf9;
+    stroke: #e5e5e5;
+    stroke-width: 1;
 }
 
 /* Nœuds */
@@ -116,6 +124,12 @@
     filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.25));
 }
 
+.node-name,
+.node-type,
+.node-parcours {
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+}
+
 .node-name {
     font-size: 13px;
     font-weight: 600;
@@ -125,6 +139,13 @@
 .node-type {
     font-size: 11px;
     fill: #514f4d;
+}
+
+/* Entrée dans un parcours (départ ou saut de Navigation). */
+.node-parcours {
+    font-size: 11px;
+    font-style: italic;
+    fill: var(--node-navigation);
 }
 
 .node_question .node-rect {

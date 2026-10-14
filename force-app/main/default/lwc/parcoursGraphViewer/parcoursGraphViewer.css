@@ -106,8 +106,16 @@
 }
 
 .edge-label {
+    font-family: 'Salesforce Sans', Arial, sans-serif;
     font-size: 11px;
     fill: var(--slds-g-color-neutral-base-30, #444);
+}
+
+/* Fond du libellé d'arête : masque le tracé sous le texte. */
+.edge-label-bg {
+    fill: var(--slds-g-color-neutral-base-100, #fff);
+    stroke: var(--slds-g-color-border-base-1, #e5e5e5);
+    stroke-width: 1;
 }
 
 /* Nœuds */
@@ -152,9 +160,14 @@
     stroke-width: 3;
 }
 
+.node-name,
+.node-sub {
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+}
+
 .node-name {
     fill: #fff;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
 }
 

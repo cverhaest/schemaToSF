@@ -52,13 +52,27 @@
                                             class="edge-line"
                                         ></polyline>
                                         <polygon points={edge.arrowPoints} class="edge-arrow"></polygon>
-                                        <template lwc:if={edge.libelle}>
-                                            <text
-                                                x={edge.labelX}
-                                                y={edge.labelY}
-                                                class="edge-label"
-                                                text-anchor="middle"
-                                            >{edge.libelle}</text>
+                                        <template lwc:if={edge.hasLabel}>
+                                            <g class="edge-label-group">
+                                                <title>{edge.libelle}</title>
+                                                <rect
+                                                    x={edge.labelBoxX}
+                                                    y={edge.labelBoxY}
+                                                    width={edge.labelBoxWidth}
+                                                    height={edge.labelBoxHeight}
+                                                    rx="4"
+                                                    class="edge-label-bg"
+                                                ></rect>
+                                                <template for:each={edge.labelLines} for:item="line">
+                                                    <text
+                                                        key={line.key}
+                                                        x={edge.labelX}
+                                                        y={line.y}
+                                                        class="edge-label"
+                                                        text-anchor="middle"
+                                                    >{line.text}</text>
+                                                </template>
+                                            </g>
                                         </template>
                                     </g>
                                 </template>
@@ -72,7 +86,7 @@
                                         onkeydown={handleNodeKey}
                                         tabindex="0"
                                         role="button"
-                                        aria-label={node.name}
+                                        aria-label={node.ariaLabel}
                                     >
                                         <rect
                                             x={node.x}
@@ -82,18 +96,16 @@
                                             rx="8"
                                             class="node-rect"
                                         ></rect>
-                                        <text
-                                            x={node.textX}
-                                            y={node.nameY}
-                                            class="node-name"
-                                            text-anchor="middle"
-                                        >{node.name}</text>
-                                        <text
-                                            x={node.textX}
-                                            y={node.typeY}
-                                            class="node-sub"
-                                            text-anchor="middle"
-                                        >{node.subLabel}</text>
+                                        <title>{node.tooltip}</title>
+                                        <template for:each={node.lines} for:item="line">
+                                            <text
+                                                key={line.key}
+                                                x={node.textX}
+                                                y={line.y}
+                                                class={line.cssClass}
+                                                text-anchor="middle"
+                                            >{line.text}</text>
+                                        </template>
                                     </g>
                                 </template>
                             </svg>

@@ -76,6 +76,38 @@ public with sharing class ParcoursRunnerController {
     }
 
     /**
+     * Liste les parcours actifs démarrables (nœud de départ défini), pour la
+     * sélection par tuiles lorsque le composant n'est pas configuré avec un code.
+     *
+     * @return Les parcours actifs triés par catégorie puis par nom.
+     */
+    @AuraEnabled(cacheable=true)
+    public static List<ParcoursTile> getParcoursActifs() {
+        try {
+            List<ParcoursTile> tiles = new List<ParcoursTile>();
+            for (Parcours__c parcours : [
+                SELECT Id, Name, Code__c, toLabel(Categorie__c), Version__c
+                FROM Parcours__c
+                WHERE Statut__c = 'Actif' AND NoeudDepart_FK__c != null
+                WITH USER_MODE
+                ORDER BY Categorie__c, Name
+                LIMIT 1000
+            ]) {
+                ParcoursTile tile = new ParcoursTile();
+                tile.parcoursId = parcours.Id;
+                tile.name = parcours.Name;
+                tile.code = parcours.Code__c;
+                tile.categorie = parcours.Categorie__c;
+                tile.version = parcours.Version__c;
+                tiles.add(tile);
+            }
+            return tiles;
+        } catch (Exception e) {
+            throw new AuraHandledException('Impossible de charger les parcours : ' + e.getMessage());
+        }
+    }
+
+    /**
      * Renvoie la vue du nœud courant d'une session.
      *
      * @param sessionId Identifiant de la session.
@@ -170,6 +202,9 @@ public with sharing class ParcoursRunnerController {
         view.typeNoeud = noeud.TypeNoeud__c;
         view.texte = noeud.Texte__c;
         view.isFin = (noeud.TypeNoeud__c == TYPE_FIN);
+        // Nom du parcours porteur du nœud : suit automatiquement les sauts de
+        // Navigation vers un sous-parcours.
+        view.parcoursNom = noeud.Parcours_FK__r?.Name;
         // Nœud d'aiguillage vers un autre parcours : on expose le libellé cible
         // pour que le LWC propose un bouton de continuation explicite.
         view.isNavigation =
@@ -382,7 +417,7 @@ public with sharing class ParcoursRunnerController {
      */
     private static Noeud__c loadNoeud(Id nodeId) {
         List<Noeud__c> noeuds = [
-            SELECT Id, Name, TypeNoeud__c, Texte__c,
+            SELECT Id, Name, TypeNoeud__c, Texte__c, Parcours_FK__r.Name,
                    ParcoursCible_FK__c, ParcoursCible_FK__r.Name
             FROM Noeud__c
             WHERE Id = :nodeId
@@ -396,6 +431,17 @@ public with sharing class ParcoursRunnerController {
     }
 
     /**
+     * Tuile de sélection d'un parcours exposée au composant LWC.
+     */
+    public class ParcoursTile {
+        @AuraEnabled public Id parcoursId;
+        @AuraEnabled public String name;
+        @AuraEnabled public String code;
+        @AuraEnabled public String categorie;
+        @AuraEnabled public Decimal version;
+    }
+
+    /**
      * Vue d'un nœud exposée au composant LWC.
      */
     public class NodeView {
@@ -404,6 +450,7 @@ public with sharing class ParcoursRunnerController {
         @AuraEnabled public String name;
         @AuraEnabled public String typeNoeud;
         @AuraEnabled public String texte;
+        @AuraEnabled public String parcoursNom;
         @AuraEnabled public Boolean isFin;
         @AuraEnabled public Boolean isNavigation;
         @AuraEnabled public String parcoursCibleNom;

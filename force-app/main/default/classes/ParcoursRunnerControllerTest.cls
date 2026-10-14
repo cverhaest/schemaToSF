@@ -175,4 +175,36 @@ private class ParcoursRunnerControllerTest {
         }
         Test.stopTest();
     }
+
+    @isTest
+    static void getParcoursActifs_WhenActiveWithStartNode_ReturnsTile() {
+        // When
+        Test.startTest();
+        List<ParcoursRunnerController.ParcoursTile> tiles = ParcoursRunnerController.getParcoursActifs();
+        Test.stopTest();
+
+        // Then
+        Assert.areEqual(1, tiles.size(), 'Seul le parcours actif démarrable doit être proposé.');
+        Assert.areEqual(CODE_PARCOURS, tiles[0].code, 'La tuile doit porter le code du parcours.');
+        Assert.areEqual('Parcours ' + CODE_PARCOURS, tiles[0].name, 'La tuile doit porter le nom du parcours.');
+    }
+
+    @isTest
+    static void getParcoursActifs_WhenDraftOrWithoutStartNode_ExcludesThem() {
+        // Given : un brouillon et un actif sans nœud de départ.
+        Parcours__c brouillon = TestDataFactory.createParcours('TEST_BROUILLON', false);
+        brouillon.Statut__c = 'Brouillon';
+        brouillon.NoeudDepart_FK__c = nodeIdByName('Q1');
+        Parcours__c sansDepart = TestDataFactory.createParcours('TEST_SANS_DEPART', false);
+        insert new List<Parcours__c>{ brouillon, sansDepart };
+
+        // When
+        Test.startTest();
+        List<ParcoursRunnerController.ParcoursTile> tiles = ParcoursRunnerController.getParcoursActifs();
+        Test.stopTest();
+
+        // Then
+        Assert.areEqual(1, tiles.size(), 'Brouillons et parcours sans départ doivent être exclus.');
+        Assert.areEqual(CODE_PARCOURS, tiles[0].code, 'Seul le parcours actif démarrable doit rester.');
+    }
 }

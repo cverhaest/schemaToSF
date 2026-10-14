@@ -15,14 +15,14 @@
                 name="parcoursCode"
                 type="String"
                 label="Code du parcours"
-                description="Code technique du parcours à exécuter (Parcours__c.Code__c)."
-                required="true"
+                description="Code technique du parcours à exécuter (Parcours__c.Code__c). Laisser vide pour proposer le choix parmi les parcours actifs, sous forme de tuiles."
+                required="false"
             />
             <property
                 name="origineType"
                 type="String"
                 label="Type d'origine"
-                description="Type de l'enregistrement hôte (ex : Case)."
+                description="Type de l'enregistrement hôte (ex : Case). Par défaut, l'objet de la page d'enregistrement."
             />
         </targetConfig>
     </targetConfigs>

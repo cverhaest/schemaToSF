@@ -5,6 +5,7 @@ import { createRecord, updateRecord, deleteRecord } from 'lightning/uiRecordApi'
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import DAGRE from '@salesforce/resourceUrl/dagre';
 import getGraph from '@salesforce/apex/ParcoursGraphController.getGraph';
+import { measureText, toPlainText, truncateToWidth, wrapText } from 'c/parcoursGraphText';
 import TRANSITION_OBJECT from '@salesforce/schema/Transition__c';
 import TR_SOURCE from '@salesforce/schema/Transition__c.NoeudSource_FK__c';
 import TR_CIBLE from '@salesforce/schema/Transition__c.NoeudCible_FK__c';
@@ -13,11 +14,34 @@ import TR_ORDRE from '@salesforce/schema/Transition__c.Ordre__c';
 import PARCOURS_ID from '@salesforce/schema/Parcours__c.Id';
 import PARCOURS_START from '@salesforce/schema/Parcours__c.NoeudDepart_FK__c';
 
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 64;
-const H_GAP = 90; // écart horizontal entre deux niveaux
+// Boîtes de nœuds : largeur fixe, hauteur ajustée au nombre de lignes de texte.
+const NODE_WIDTH = 200;
+const NODE_MIN_HEIGHT = 52;
+const NODE_PAD_X = 12;
+const NODE_PAD_Y = 10;
+const NAME_LINE_HEIGHT = 15;
+const SUB_LINE_HEIGHT = 14;
+const NAME_SUB_GAP = 4;
+const NAME_MAX_LINES = 3;
+
+// Libellés d'arêtes : largeur bornée, place réservée dans la disposition.
+const EDGE_LABEL_MAX_WIDTH = 140;
+const EDGE_LABEL_MAX_LINES = 2;
+const EDGE_LINE_HEIGHT = 13;
+const EDGE_LABEL_PAD = 4;
+
+const H_GAP = 40; // écart entre deux niveaux (hors place réservée aux libellés)
 const V_GAP = 28; // écart vertical entre deux nœuds d'un même niveau
 const MARGIN = 24;
+
+// Polices utilisées pour la mesure ; alignées sur le CSS du composant.
+const FONT_FAMILY = "'Salesforce Sans', Arial, sans-serif";
+const NAME_FONT = `600 12px ${FONT_FAMILY}`;
+const SUB_FONT = `11px ${FONT_FAMILY}`;
+const EDGE_FONT = `11px ${FONT_FAMILY}`;
+
+// Longueur maximale du Texte dans les options du menu « destination ».
+const OPTION_TEXT_MAX = 60;
 
 const ZOOM_MIN = 0.4;
 const ZOOM_MAX = 1.6;
@@ -152,17 +176,26 @@ export default class ParcoursGraphViewer extends LightningElement {
 
     // Options du menu déroulant « destination » : tous les nœuds du parcours.
     get nodeOptions() {
-        return this._rawNodes.map((node) => ({
-            label: node.name,
-            value: node.id
-        }));
+        return this._rawNodes.map((node) => {
+            const texte = toPlainText(node.texte);
+            const extrait =
+                texte.length > OPTION_TEXT_MAX
+                    ? `${texte.slice(0, OPTION_TEXT_MAX).trimEnd()}…`
+                    : texte;
+            return {
+                label: extrait ? `${node.name} — ${extrait}` : node.name,
+                value: node.id
+            };
+        });
     }
 
     /**
-     * Produit les modèles de vue des nœuds et des arêtes. Le calcul des positions
-     * est délégué à dagre (disposition en couches avec minimisation des
-     * croisements) dès qu'il est chargé ; tant qu'il ne l'est pas, un repli BFS
-     * fournit une disposition immédiate.
+     * Produit les modèles de vue des nœuds et des arêtes. Les textes sont
+     * mesurés d'abord (hauteur des boîtes, taille des libellés) pour que la
+     * disposition leur réserve la place nécessaire. Le calcul des positions est
+     * délégué à dagre (disposition en couches avec minimisation des croisements)
+     * dès qu'il est chargé ; tant qu'il ne l'est pas, un repli BFS fournit une
+     * disposition immédiate.
      */
     buildLayout(graph) {
         this._graphData = graph;
@@ -182,32 +215,30 @@ export default class ParcoursGraphViewer extends LightningElement {
                 : null;
         this._startNodeId = startId;
 
+        const boxById = this.measureNodes(rawNodes);
+        const validEdges = rawEdges
+            .filter((edge) => nodeById.has(edge.source) && nodeById.has(edge.target))
+            .map((edge, index) => ({
+                ...edge,
+                key: edge.id || `edge-${index}`,
+                label: this.measureEdgeLabel(edge.libelle)
+            }));
+
         const layout =
             this._dagreReady && window.dagre
-                ? this.computeDagreLayout(rawNodes, rawEdges, nodeById)
-                : this.computeBfsLayout(rawNodes, rawEdges, nodeById, startId);
+                ? this.computeDagreLayout(rawNodes, validEdges, boxById)
+                : this.computeBfsLayout(rawNodes, validEdges, boxById, startId);
 
         this.nodes = rawNodes
             .filter((node) => layout.positionById.has(node.id))
-            .map((node) => {
-                const position = layout.positionById.get(node.id);
-                const isStart = node.id === startId;
-                return {
-                    id: node.id,
-                    name: node.name,
-                    subLabel: this.buildSubLabel(node),
-                    x: position.x,
-                    y: position.y,
-                    textX: position.x + NODE_WIDTH / 2,
-                    nameY: position.y + 26,
-                    typeY: position.y + 46,
-                    width: NODE_WIDTH,
-                    height: NODE_HEIGHT,
-                    cssClass:
-                        (TYPE_CLASS[node.typeNoeud] || 'node') +
-                        (isStart ? ' node_start' : '')
-                };
-            });
+            .map((node) =>
+                this.buildNodeModel(
+                    node,
+                    layout.positionById.get(node.id),
+                    boxById.get(node.id),
+                    node.id === startId
+                )
+            );
 
         this.edges = layout.edges;
         this.svgWidth = layout.width;
@@ -215,29 +246,107 @@ export default class ParcoursGraphViewer extends LightningElement {
     }
 
     /**
-     * Disposition optimisée par dagre : rangs horizontaux (gauche -> droite),
-     * tracés d'arêtes multi-points contournant les nœuds. Les coordonnées de
-     * nœud renvoyées par dagre sont des centres : on les ramène au coin supérieur
-     * gauche attendu par le rendu SVG.
+     * Mesure le contenu de chaque nœud : Texte métier (3 lignes max, à défaut la
+     * clé du nœud) puis une ligne « clé · type ». Renvoie lignes et hauteur.
      */
-    computeDagreLayout(rawNodes, rawEdges, nodeById) {
+    measureNodes(rawNodes) {
+        const textWidth = NODE_WIDTH - NODE_PAD_X * 2;
+        const boxById = new Map();
+        rawNodes.forEach((node) => {
+            const texte = toPlainText(node.texte);
+            const nameLines = wrapText(texte || node.name, NAME_FONT, textWidth, NAME_MAX_LINES);
+            const subLabel = (texte ? [node.name, this.buildSubLabel(node)] : [this.buildSubLabel(node)])
+                .filter(Boolean)
+                .join(' · ');
+            const subLines = subLabel ? [truncateToWidth(subLabel, SUB_FONT, textWidth)] : [];
+            const textHeight =
+                nameLines.length * NAME_LINE_HEIGHT +
+                (subLines.length ? NAME_SUB_GAP + subLines.length * SUB_LINE_HEIGHT : 0);
+
+            boxById.set(node.id, {
+                nameLines,
+                subLines,
+                textHeight,
+                width: NODE_WIDTH,
+                height: Math.max(NODE_MIN_HEIGHT, Math.ceil(textHeight + NODE_PAD_Y * 2))
+            });
+        });
+        return boxById;
+    }
+
+    /** Mesure le libellé d'une arête (réponse) : lignes et encombrement. */
+    measureEdgeLabel(libelle) {
+        if (!libelle) {
+            return null;
+        }
+        const lines = wrapText(libelle, EDGE_FONT, EDGE_LABEL_MAX_WIDTH, EDGE_LABEL_MAX_LINES);
+        const widest = lines.reduce((max, line) => Math.max(max, measureText(line, EDGE_FONT)), 0);
+        return {
+            lines,
+            width: Math.ceil(widest + EDGE_LABEL_PAD * 2),
+            height: lines.length * EDGE_LINE_HEIGHT + EDGE_LABEL_PAD * 2
+        };
+    }
+
+    /** Modèle de vue d'un nœud : boîte et lignes de texte centrées verticalement. */
+    buildNodeModel(node, position, box, isStart) {
+        let cursor = position.y + (box.height - box.textHeight) / 2;
+        const lines = [];
+        box.nameLines.forEach((text, index) => {
+            cursor += NAME_LINE_HEIGHT;
+            lines.push({ key: `n${index}`, text, y: cursor - 4, cssClass: 'node-name' });
+        });
+        if (box.subLines.length) {
+            cursor += NAME_SUB_GAP;
+        }
+        box.subLines.forEach((text, index) => {
+            cursor += SUB_LINE_HEIGHT;
+            lines.push({ key: `s${index}`, text, y: cursor - 3, cssClass: 'node-sub' });
+        });
+
+        const texte = toPlainText(node.texte);
+        return {
+            id: node.id,
+            name: node.name,
+            tooltip: [texte, node.name, this.buildSubLabel(node)].filter(Boolean).join(' — '),
+            ariaLabel: texte ? `${node.name} : ${texte}` : node.name,
+            x: position.x,
+            y: position.y,
+            textX: position.x + box.width / 2,
+            lines,
+            width: box.width,
+            height: box.height,
+            cssClass: (TYPE_CLASS[node.typeNoeud] || 'node') + (isStart ? ' node_start' : '')
+        };
+    }
+
+    /**
+     * Disposition optimisée par dagre : rangs horizontaux (gauche -> droite),
+     * tracés d'arêtes multi-points contournant les nœuds, place réservée aux
+     * libellés d'arêtes. Les coordonnées renvoyées sont des centres : on les
+     * ramène au coin supérieur gauche attendu par le rendu SVG.
+     */
+    computeDagreLayout(rawNodes, edges, boxById) {
         const g = new window.dagre.graphlib.Graph({ multigraph: true });
         g.setGraph({
             rankdir: 'LR',
             nodesep: V_GAP,
             ranksep: H_GAP,
+            edgesep: 12,
             marginx: MARGIN,
             marginy: MARGIN
         });
         g.setDefaultEdgeLabel(() => ({}));
 
-        rawNodes.forEach((node) =>
-            g.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT })
-        );
-        rawEdges.forEach((edge, index) => {
-            if (nodeById.has(edge.source) && nodeById.has(edge.target)) {
-                g.setEdge(edge.source, edge.target, {}, edge.id || `edge-${index}`);
-            }
+        rawNodes.forEach((node) => {
+            const box = boxById.get(node.id);
+            g.setNode(node.id, { width: box.width, height: box.height });
+        });
+        edges.forEach((edge) => {
+            const label = edge.label
+                ? { width: edge.label.width, height: edge.label.height, labelpos: 'c' }
+                : {};
+            g.setEdge(edge.source, edge.target, label, edge.key);
         });
 
         window.dagre.layout(g);
@@ -246,26 +355,24 @@ export default class ParcoursGraphViewer extends LightningElement {
         rawNodes.forEach((node) => {
             const n = g.node(node.id);
             if (n) {
-                positionById.set(node.id, {
-                    x: n.x - NODE_WIDTH / 2,
-                    y: n.y - NODE_HEIGHT / 2
-                });
+                positionById.set(node.id, { x: n.x - n.width / 2, y: n.y - n.height / 2 });
             }
         });
 
-        const edges = rawEdges
-            .filter((edge) => nodeById.has(edge.source) && nodeById.has(edge.target))
-            .map((edge, index) => {
-                const name = edge.id || `edge-${index}`;
-                const e = g.edge(edge.source, edge.target, name);
-                const points = (e && e.points) || [];
-                return this.buildEdge(name, points, edge.libelle);
-            });
+        const edgeModels = edges.map((edge) => {
+            const e = g.edge(edge.source, edge.target, edge.key);
+            const points = (e && e.points) || [];
+            const center =
+                e && edge.label && Number.isFinite(e.x) && Number.isFinite(e.y)
+                    ? { x: e.x, y: e.y }
+                    : null;
+            return this.buildEdge(edge.key, points, edge.libelle, edge.label, center);
+        });
 
         const graphInfo = g.graph();
         return {
             positionById,
-            edges,
+            edges: edgeModels,
             width: Math.ceil(graphInfo.width || MARGIN * 2),
             height: Math.ceil(graphInfo.height || MARGIN * 2)
         };
@@ -274,11 +381,12 @@ export default class ParcoursGraphViewer extends LightningElement {
     /**
      * Disposition de repli : profondeur de chaque nœud via un parcours en largeur
      * depuis le départ, nœuds d'un même niveau empilés verticalement. Les arêtes
-     * sont des segments droits d'un bord de nœud à l'autre.
+     * sont des segments droits d'un bord de nœud à l'autre ; l'écart entre
+     * niveaux couvre la largeur maximale d'un libellé d'arête.
      */
-    computeBfsLayout(rawNodes, rawEdges, nodeById, startId) {
+    computeBfsLayout(rawNodes, edges, boxById, startId) {
         const outgoing = new Map();
-        rawEdges.forEach((edge) => {
+        edges.forEach((edge) => {
             if (!outgoing.has(edge.source)) {
                 outgoing.set(edge.source, []);
             }
@@ -295,7 +403,7 @@ export default class ParcoursGraphViewer extends LightningElement {
             const current = queue.shift();
             const currentDepth = depthById.get(current);
             (outgoing.get(current) || []).forEach((target) => {
-                if (nodeById.has(target) && !depthById.has(target)) {
+                if (boxById.has(target) && !depthById.has(target)) {
                     depthById.set(target, currentDepth + 1);
                     queue.push(target);
                 }
@@ -304,9 +412,7 @@ export default class ParcoursGraphViewer extends LightningElement {
 
         let maxDepth = 0;
         depthById.forEach((depth) => {
-            if (depth > maxDepth) {
-                maxDepth = depth;
-            }
+            maxDepth = Math.max(maxDepth, depth);
         });
         rawNodes.forEach((node) => {
             if (!depthById.has(node.id)) {
@@ -323,55 +429,51 @@ export default class ParcoursGraphViewer extends LightningElement {
             byDepth.get(depth).push(node);
         });
 
-        let maxRows = 0;
-        byDepth.forEach((group) => {
-            if (group.length > maxRows) {
-                maxRows = group.length;
-            }
-        });
-
+        const gap = Math.max(H_GAP * 2, EDGE_LABEL_MAX_WIDTH + EDGE_LABEL_PAD * 2 + 32);
         const positionById = new Map();
+        let maxColumnHeight = 0;
+        let lastDepth = 0;
         Array.from(byDepth.keys())
             .sort((a, b) => a - b)
             .forEach((depth) => {
-                byDepth.get(depth).forEach((node, index) => {
-                    positionById.set(node.id, {
-                        x: MARGIN + depth * (NODE_WIDTH + H_GAP),
-                        y: MARGIN + index * (NODE_HEIGHT + V_GAP)
-                    });
+                let y = MARGIN;
+                byDepth.get(depth).forEach((node) => {
+                    positionById.set(node.id, { x: MARGIN + depth * (NODE_WIDTH + gap), y });
+                    y += boxById.get(node.id).height + V_GAP;
                 });
+                maxColumnHeight = Math.max(maxColumnHeight, y - V_GAP);
+                lastDepth = Math.max(lastDepth, depth);
             });
 
-        const edges = rawEdges
-            .filter(
-                (edge) =>
-                    positionById.has(edge.source) &&
-                    positionById.has(edge.target)
-            )
-            .map((edge, index) => {
+        const edgeModels = edges
+            .filter((edge) => positionById.has(edge.source) && positionById.has(edge.target))
+            .map((edge) => {
                 const source = positionById.get(edge.source);
                 const target = positionById.get(edge.target);
+                const sourceBox = boxById.get(edge.source);
+                const targetBox = boxById.get(edge.target);
                 const points = [
-                    { x: source.x + NODE_WIDTH, y: source.y + NODE_HEIGHT / 2 },
-                    { x: target.x, y: target.y + NODE_HEIGHT / 2 }
+                    { x: source.x + sourceBox.width, y: source.y + sourceBox.height / 2 },
+                    { x: target.x, y: target.y + targetBox.height / 2 }
                 ];
-                return this.buildEdge(edge.id || `edge-${index}`, points, edge.libelle);
+                return this.buildEdge(edge.key, points, edge.libelle, edge.label, null);
             });
 
         return {
             positionById,
-            edges,
-            width: MARGIN * 2 + (maxDepth + 2) * (NODE_WIDTH + H_GAP),
-            height: MARGIN * 2 + Math.max(maxRows, 1) * (NODE_HEIGHT + V_GAP)
+            edges: edgeModels,
+            width: MARGIN * 2 + (lastDepth + 1) * NODE_WIDTH + lastDepth * gap,
+            height: Math.max(maxColumnHeight, NODE_MIN_HEIGHT) + MARGIN
         };
     }
 
     /**
      * Construit le modèle de vue d'une arête à partir d'une polyligne : chaîne
      * `points` pour le tracé, pointe de flèche orientée selon le dernier segment,
-     * et position du libellé au milieu du tracé.
+     * libellé sur fond, centré sur la place réservée par la disposition ou, à
+     * défaut, au milieu du tracé.
      */
-    buildEdge(id, points, libelle) {
+    buildEdge(id, points, libelle, label, center) {
         const safePoints =
             points && points.length >= 2
                 ? points
@@ -398,14 +500,31 @@ export default class ParcoursGraphViewer extends LightningElement {
             baseY + perpY * half
         } ${baseX - perpX * half},${baseY - perpY * half}`;
 
-        const mid = safePoints[Math.floor(safePoints.length / 2)];
+        const model = { id, points: pointsAttr, arrowPoints, libelle, hasLabel: false };
+        if (!label) {
+            return model;
+        }
+
+        let anchor = center;
+        if (!anchor) {
+            const first = safePoints[0];
+            const last = safePoints[safePoints.length - 1];
+            anchor = { x: (first.x + last.x) / 2, y: (first.y + last.y) / 2 };
+        }
+        const top = anchor.y - label.height / 2;
         return {
-            id,
-            points: pointsAttr,
-            arrowPoints,
-            labelX: mid.x,
-            labelY: mid.y - 6,
-            libelle
+            ...model,
+            hasLabel: true,
+            labelBoxX: anchor.x - label.width / 2,
+            labelBoxY: top,
+            labelBoxWidth: label.width,
+            labelBoxHeight: label.height,
+            labelX: anchor.x,
+            labelLines: label.lines.map((text, index) => ({
+                key: `${id}-l${index}`,
+                text,
+                y: top + EDGE_LABEL_PAD + (index + 1) * EDGE_LINE_HEIGHT - 3
+            }))
         };
     }
 
@@ -423,7 +542,7 @@ export default class ParcoursGraphViewer extends LightningElement {
     selectNode(nodeId) {
         this.selectedNodeId = nodeId;
         const node = this._rawNodes.find((item) => item.id === nodeId);
-        this.selectedNodeName = node ? node.name : '';
+        this.selectedNodeName = node ? toPlainText(node.texte) || node.name : '';
         this.responseRows = this._rawEdges
             .filter((edge) => edge.source === nodeId)
             .map((edge) => ({

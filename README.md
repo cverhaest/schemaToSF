@@ -108,7 +108,7 @@ Les logigrammes d'origine (schémas sources) sont dans le dossier [`schema/`](sc
 | `ParcoursRunnerController` | Contrôleur du moteur : chargement du nœud courant, persistance des réponses, avance (dont saut inter-parcours), clôture. |
 | `ParcoursActionHandler` | Handler **générique** des nœuds Action (DML décrit par la donnée + journalisation `ActionExecutee__c`). |
 | `ParcoursGraphController` | Expose le **graphe statique** d'un parcours (nœuds + transitions) au visualiseur. |
-| `ParcoursSessionViewerController` | Reconstruit le **chemin exécuté** d'une session (nœuds visités, réponse choisie, valeurs saisies) à partir des `ReponseSaisie__c`. |
+| `ParcoursSessionViewerController` | Reconstruit le **chemin exécuté** d'une session (nœuds visités avec leur Texte, réponse choisie, valeurs saisies) à partir des `ReponseSaisie__c`. |
 | `TestDataFactory` | Fabrique de données de test partagée. |
 
 Chaque contrôleur a sa classe de test (`*Test`).
@@ -117,11 +117,14 @@ Chaque contrôleur a sa classe de test (`*Test`).
 
 | Composant | Où | Rôle |
 |---|---|---|
-| `parcoursRunner` | Page Account / Case | **Moteur** générique : déroule le parcours à l'écran, pas à pas. |
+| `parcoursRunner` | Page Account / Case | **Moteur** générique : déroule le parcours à l'écran, pas à pas. Le titre affiche le nom du parcours ; si la propriété `parcoursCode` est vide, le composant propose une **sélection par tuiles** des parcours actifs. |
 | `parcoursGraphViewer` | Page `Parcours__c` | **Visualiseur du parcours** (graphe statique) + administration des nœuds. |
 | `parcoursSessionViewer` | Page `SessionParcours__c` | **Visualiseur d'exécution** : rejoue graphiquement le chemin réellement suivi par une session (nœuds franchis, réponse choisie sur chaque arête, nœud courant surligné, détail d'étape). |
+| `parcoursGraphText` | — (module non exposé) | Utilitaires de texte partagés par les deux visualiseurs : mesure en pixels, découpage en lignes, troncature, conversion du Texte (HTML) en texte brut. |
 
 > Les deux visualiseurs partagent la même nature graphique : disposition en couches via **dagre** (ressource statique `dagre`), rendu **SVG** (repli BFS si dagre indisponible), zoom et légende par type de nœud. Le rendu « Mermaid à la demande » envisagé initialement a été remplacé par ce rendu SVG interactif.
+>
+> **Lisibilité :** chaque boîte affiche le **Texte métier** du nœud (`Texte__c`, 3 lignes max, à défaut sa clé `Name`) avec une ligne secondaire « clé · type ». La hauteur des boîtes s'adapte au texte ; les libellés de réponse sur les arêtes sont découpés (2 lignes max), posés sur un fond et **pris en compte par la disposition** pour ne chevaucher ni nœuds ni flèches. Le texte complet reste accessible en infobulle.
 
 ### Intégration pages Lightning
 

@@ -3,6 +3,7 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import startSession from '@salesforce/apex/ParcoursRunnerController.startSession';
 import getCurrentNode from '@salesforce/apex/ParcoursRunnerController.getCurrentNode';
 import submitAndNavigate from '@salesforce/apex/ParcoursRunnerController.submitAndNavigate';
+import getParcoursActifs from '@salesforce/apex/ParcoursRunnerController.getParcoursActifs';
 
 // Correspondance entre le type de champ métier et le type lightning-input.
 const INPUT_TYPE_BY_CHAMP = {
@@ -20,18 +21,30 @@ const INPUT_TYPE_BY_CHAMP = {
  * code n'est spécifique à un parcours : tout vient des données.
  */
 export default class ParcoursRunner extends LightningElement {
-    /** Code technique du parcours à exécuter (Parcours__c.Code__c). */
+    /**
+     * Code technique du parcours à exécuter (Parcours__c.Code__c). Facultatif :
+     * s'il est vide, le composant propose les parcours actifs sous forme de tuiles.
+     */
     @api parcoursCode;
     /** Id de l'enregistrement hôte (ex : Case) pour tracer l'origine. */
     @api recordId;
-    /** Type de l'enregistrement hôte (ex : Case). */
+    /** API name de l'objet hôte, fourni automatiquement sur une page d'enregistrement. */
+    @api objectApiName;
+    /** Type de l'enregistrement hôte (ex : Case) ; par défaut l'objet de la page. */
     @api origineType;
 
     @track node;
     sessionId;
+    // Nom du parcours en cours ; conservé après la fin pour le titre de la carte.
+    parcoursNom;
     isLoading = false;
     isComplete = false;
     errorMessage;
+
+    // Mode sélection : parcours choisi par l'utilisateur et tuiles disponibles.
+    selectedCode;
+    tiles = [];
+    searchTerm = '';
 
     // Réponses saisies du nœud courant, indexées par Id de champ de saisie.
     answers = {};
@@ -39,20 +52,57 @@ export default class ParcoursRunner extends LightningElement {
     connectedCallback() {
         if (this.parcoursCode) {
             this.begin();
+        } else {
+            this.loadTiles();
         }
+    }
+
+    /** Charge les parcours actifs proposés en tuiles. */
+    async loadTiles() {
+        this.isLoading = true;
+        this.errorMessage = undefined;
+        try {
+            this.tiles = await getParcoursActifs();
+        } catch (error) {
+            this.reportError(error);
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    /** Clic sur une tuile : démarre le parcours choisi. */
+    handleSelectParcours(event) {
+        this.selectedCode = event.currentTarget.dataset.code;
+        this.begin();
+    }
+
+    handleSearch(event) {
+        this.searchTerm = event.target.value || '';
+    }
+
+    /** Abandonne l'affichage du parcours courant et revient au choix des tuiles. */
+    handleBackToPicker() {
+        this.selectedCode = undefined;
+        this.sessionId = undefined;
+        this.node = undefined;
+        this.parcoursNom = undefined;
+        this.isComplete = false;
+        this.errorMessage = undefined;
+        this.answers = {};
     }
 
     /** Démarre une nouvelle session de parcours. */
     async begin() {
         this.isLoading = true;
         this.errorMessage = undefined;
+        const origine = this.effectiveOrigineType;
         try {
             const view = await startSession({
-                parcoursCode: this.parcoursCode,
-                origineType: this.origineType || null,
+                parcoursCode: this.activeCode,
+                origineType: origine || null,
                 origineId: this.recordId || null,
-                accountId: null,
-                caseId: this.origineType === 'Case' ? this.recordId : null
+                accountId: origine === 'Account' ? this.recordId : null,
+                caseId: origine === 'Case' ? this.recordId : null
             });
             this.applyNode(view);
         } catch (error) {
@@ -132,6 +182,7 @@ export default class ParcoursRunner extends LightningElement {
     /** Applique une vue de nœud reçue du serveur et réinitialise les saisies. */
     applyNode(view) {
         this.sessionId = view.sessionId;
+        this.parcoursNom = view.parcoursNom || this.parcoursNom;
         this.answers = {};
         this.isComplete = Boolean(view.isFin) && (!view.transitions || view.transitions.length === 0);
         this.node = {
@@ -155,6 +206,61 @@ export default class ParcoursRunner extends LightningElement {
                 variant: 'error'
             })
         );
+    }
+
+    get cardTitle() {
+        if (this.isPicker) {
+            return 'Choisir un parcours';
+        }
+        return this.parcoursNom || 'Parcours métier';
+    }
+
+    /** Code effectivement exécuté : configuré dans App Builder ou choisi en tuile. */
+    get activeCode() {
+        return this.parcoursCode || this.selectedCode;
+    }
+
+    get effectiveOrigineType() {
+        return this.origineType || this.objectApiName;
+    }
+
+    /** Aucun code configuré ni choisi : on affiche les tuiles. */
+    get isPicker() {
+        return !this.activeCode;
+    }
+
+    /** Le retour au choix n'existe que si le parcours n'est pas imposé par la configuration. */
+    get canChangeParcours() {
+        return !this.parcoursCode && Boolean(this.selectedCode);
+    }
+
+    get filteredTiles() {
+        const term = this.searchTerm.trim().toLowerCase();
+        const tiles = term
+            ? this.tiles.filter((tile) =>
+                  [tile.name, tile.code, tile.categorie].some(
+                      (value) => value && value.toLowerCase().includes(term)
+                  )
+              )
+            : this.tiles;
+        return tiles.map((tile) => ({
+            ...tile,
+            versionLabel: tile.version != null ? `v${tile.version}` : ''
+        }));
+    }
+
+    get hasTiles() {
+        return this.filteredTiles.length > 0;
+    }
+
+    get showNoTiles() {
+        return this.isPicker && !this.isLoading && !this.hasTiles;
+    }
+
+    get noTilesMessage() {
+        return this.searchTerm
+            ? 'Aucun parcours ne correspond à la recherche.'
+            : 'Aucun parcours actif disponible.';
     }
 
     get hasChamps() {

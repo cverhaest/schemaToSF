@@ -340,6 +340,8 @@ flowchart LR
 | **`parcoursGraphViewer`** (page `Parcours__c`) | `Noeud__c` + `Transition__c` du parcours | Le **graphe statique** complet du parcours (toutes les branches possibles), avec administration inline des nœuds. |
 | **`parcoursSessionViewer`** (page `SessionParcours__c`, onglet **« Déroulé »**) | `ReponseSaisie__c` triées par `Horodatage__c` + `NoeudCourant_FK__c` | Le **chemin réellement suivi** par une exécution : nœuds franchis dans l'ordre, **réponse choisie** portée par chaque arête, **valeurs saisies** dans un panneau de détail, **nœud courant** surligné. Les arêtes reliant les nœuds consécutifs du chemin, un saut vers un sous-parcours apparaît naturellement. |
 
+**Lisibilité métier.** Les deux viewers affichent dans chaque boîte le **Texte** du nœud (`Noeud__c.Texte__c`, converti en texte brut, 3 lignes max) plutôt que sa clé technique, qui reste visible en ligne secondaire (« clé · type ») et en infobulle. Les boîtes ont une hauteur ajustée à leur contenu ; les libellés de réponse portés par les arêtes sont découpés, posés sur un fond et intégrés au calcul de disposition, ce qui évite tout chevauchement avec les nœuds et les flèches. Les fonctions de mesure et de découpage sont mutualisées dans le module LWC `parcoursGraphText`.
+
 ## 11. Trajectoire de migration (incrémentale, sans risque)
 
 ```mermaid

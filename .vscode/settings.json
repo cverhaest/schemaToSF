@@ -5,5 +5,9 @@
     "**/.sf": true,
     "**/.sfdx": true
   },
-  "xml.preferences.showSchemaDocumentationType": "none"
+  "xml.preferences.showSchemaDocumentationType": "none",
+  "workbench.colorCustomizations": {
+    "statusBar.background": "#009CDB",
+    "statusBar.foreground": "#FFFFFF"
+  }
 }

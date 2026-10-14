@@ -73,22 +73,29 @@ donnée (parcours), pas dans le code.
 | `ParcoursRunnerController` | Moteur : charge le nœud courant, persiste les réponses, avance (dont saut inter-parcours), clôture. |
 | `ParcoursActionHandler` | Handler **générique** des nœuds Action (DML décrit par la donnée + journalisation). |
 | `ParcoursGraphController` | Expose le **graphe statique** d'un parcours au visualiseur. |
-| `ParcoursSessionViewerController` | Reconstruit le **chemin exécuté** d'une session depuis `ReponseSaisie__c` (ORDER BY `Horodatage__c`), `WITH USER_MODE`. DTOs : SessionPathDTO/StepDTO/EdgeDTO. |
+| `ParcoursSessionViewerController` | Reconstruit le **chemin exécuté** d'une session depuis `ReponseSaisie__c` (ORDER BY `Horodatage__c`), `WITH USER_MODE`. DTOs : SessionPathDTO/StepDTO (dont `texte` = `Noeud__c.Texte__c`)/EdgeDTO. |
 | `TestDataFactory` | Fabrique de données de test partagée. |
 
 **LWC** :
 
 | Composant | Page | Rôle |
 |---|---|---|
-| `parcoursRunner` | Account / Case | Moteur générique, déroule le parcours pas à pas. |
+| `parcoursRunner` | Account / Case | Moteur générique, déroule le parcours pas à pas. Titre = nom du parcours ; `parcoursCode` vide → sélection par tuiles des parcours actifs. |
 | `parcoursGraphViewer` | `Parcours__c` | Visualiseur du graphe statique + admin des nœuds. |
 | `parcoursSessionViewer` | `SessionParcours__c` | Visualiseur d'exécution (read-only) : rejoue le chemin suivi, réponse choisie sur chaque arête, nœud courant surligné, panneau de détail d'étape. |
+| `parcoursGraphText` | — (`isExposed` false) | Module partagé par les visualiseurs (`import … from 'c/parcoursGraphText'`) : `measureText` (canvas, repli estimation), `truncateToWidth`, `wrapText`, `toPlainText` (Texte HTML → texte brut). |
 
 **Visualiseurs — nature graphique commune** : disposition en couches via **dagre**
 (ressource statique `dagre`, UMD `window.dagre`, chargée via `loadScript`), rendu
-**SVG** (`polyline` arêtes + polygone-flèche + label au milieu), **repli BFS** si
+**SVG** (`polyline` arêtes + polygone-flèche), **repli BFS** si
 dagre indisponible (c'est le cas sous sfdx-lwc-jest qui auto-mocke
-platformResourceLoader). Zoom + légende par type de nœud. Le « Mermaid à la
+platformResourceLoader). Zoom + légende par type de nœud.
+Boîtes : **Texte métier** (`Texte__c` en texte brut, 3 lignes max, repli `Name`) +
+ligne « clé · type » ; hauteur variable mesurée avant disposition. Libellés
+d'arêtes : 2 lignes max, fond `rect.edge-label-bg`, taille passée à dagre
+(`setEdge(..., {width, height, labelpos: 'c'})`, centre `e.x/e.y`) pour éviter les
+chevauchements ; en BFS, écart entre niveaux élargi. Infobulles `<title>` avec le
+texte complet. Le « Mermaid à la
 demande » envisagé initialement a été **remplacé** par ce rendu SVG interactif.
 
 **Intégration FlexiPage** : `Session_Record_Page` (`SessionParcours__c`) a un

@@ -1,6 +1,63 @@
 <template>
-    <lightning-card title="Parcours métier" icon-name="standard:flow">
+    <lightning-card title={cardTitle} icon-name="standard:flow">
+        <template lwc:if={canChangeParcours}>
+            <lightning-button
+                slot="actions"
+                label="Changer de parcours"
+                icon-name="utility:back"
+                onclick={handleBackToPicker}
+            ></lightning-button>
+        </template>
         <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <!-- Sélection du parcours par tuiles (aucun code configuré) -->
+            <template lwc:if={isPicker}>
+                <lightning-input
+                    type="search"
+                    label="Rechercher un parcours"
+                    variant="label-hidden"
+                    placeholder="Rechercher un parcours (nom, code, catégorie)…"
+                    value={searchTerm}
+                    onchange={handleSearch}
+                    class="slds-m-bottom_small"
+                ></lightning-input>
+
+                <template lwc:if={hasTiles}>
+                    <ul class="tile-grid" aria-label="Parcours disponibles">
+                        <template for:each={filteredTiles} for:item="tile">
+                            <li key={tile.parcoursId}>
+                                <button
+                                    type="button"
+                                    class="tile slds-box"
+                                    data-code={tile.code}
+                                    title={tile.name}
+                                    onclick={handleSelectParcours}
+                                >
+                                    <span class="tile-header">
+                                        <lightning-icon
+                                            icon-name="standard:flow"
+                                            size="small"
+                                            alternative-text=""
+                                        ></lightning-icon>
+                                        <span class="tile-name">{tile.name}</span>
+                                    </span>
+                                    <span class="tile-meta">
+                                        <span class="tile-code">{tile.code}</span>
+                                        <span>{tile.versionLabel}</span>
+                                    </span>
+                                    <template lwc:if={tile.categorie}>
+                                        <lightning-badge label={tile.categorie} class="tile-badge"></lightning-badge>
+                                    </template>
+                                </button>
+                            </li>
+                        </template>
+                    </ul>
+                </template>
+
+                <template lwc:if={showNoTiles}>
+                    <p class="slds-text-color_weak slds-p-vertical_small">{noTilesMessage}</p>
+                </template>
+            </template>
+
             <!-- Chargement -->
             <template lwc:if={isLoading}>
                 <lightning-spinner alternative-text="Chargement" size="small"></lightning-spinner>
@@ -24,6 +81,14 @@
                     ></lightning-icon>
                     Parcours terminé.
                 </div>
+                <template lwc:if={canChangeParcours}>
+                    <lightning-button
+                        label="Démarrer un autre parcours"
+                        variant="brand"
+                        onclick={handleBackToPicker}
+                        class="slds-m-top_small"
+                    ></lightning-button>
+                </template>
             </template>
 
             <!-- Nœud courant -->

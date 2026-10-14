@@ -55,6 +55,7 @@ public with sharing class ParcoursSessionViewerController {
                     Id,
                     Noeud_FK__c,
                     Noeud_FK__r.Name,
+                    Noeud_FK__r.Texte__c,
                     Noeud_FK__r.TypeNoeud__c,
                     Noeud_FK__r.Parcours_FK__r.Name,
                     Transition_FK__c,
@@ -178,7 +179,7 @@ public with sharing class ParcoursSessionViewerController {
      */
     private static StepDTO buildCurrentStep(Id nodeId) {
         List<Noeud__c> noeuds = [
-            SELECT Id, Name, TypeNoeud__c, Parcours_FK__r.Name
+            SELECT Id, Name, Texte__c, TypeNoeud__c, Parcours_FK__r.Name
             FROM Noeud__c
             WHERE Id = :nodeId
             WITH USER_MODE
@@ -227,6 +228,8 @@ public with sharing class ParcoursSessionViewerController {
         @AuraEnabled
         public String name;
         @AuraEnabled
+        public String texte;
+        @AuraEnabled
         public String typeNoeud;
         @AuraEnabled
         public String parcoursNom;
@@ -246,6 +249,7 @@ public with sharing class ParcoursSessionViewerController {
             this.isCurrent = false;
             if (reponse.Noeud_FK__r != null) {
                 this.name = reponse.Noeud_FK__r.Name;
+                this.texte = reponse.Noeud_FK__r.Texte__c;
                 this.typeNoeud = reponse.Noeud_FK__r.TypeNoeud__c;
                 this.parcoursNom = reponse.Noeud_FK__r.Parcours_FK__r != null
                     ? reponse.Noeud_FK__r.Parcours_FK__r.Name
@@ -257,6 +261,7 @@ public with sharing class ParcoursSessionViewerController {
         public StepDTO(Noeud__c noeud) {
             this.id = noeud.Id;
             this.name = noeud.Name;
+            this.texte = noeud.Texte__c;
             this.typeNoeud = noeud.TypeNoeud__c;
             this.parcoursNom = noeud.Parcours_FK__r != null
                 ? noeud.Parcours_FK__r.Name
